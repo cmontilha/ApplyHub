@@ -1,0 +1,110 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+    BarChart3,
+    Briefcase,
+    Building2,
+    ChevronLeft,
+    ChevronRight,
+    GraduationCap,
+    Users,
+} from 'lucide-react';
+
+const NAV_ITEMS = [
+    { href: '/app/dashboard', label: 'Dashboard', icon: BarChart3 },
+    { href: '/app/applications', label: 'Applications', icon: Briefcase },
+    { href: '/app/companies', label: 'Companies', icon: Building2 },
+    { href: '/app/networking', label: 'Networking', icon: Users },
+    { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
+];
+
+export function AppSidebar() {
+    const pathname = usePathname();
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    useEffect(() => {
+        const persisted = window.localStorage.getItem('applyhub-sidebar-collapsed');
+        if (persisted === '1') {
+            setIsCollapsed(true);
+        }
+    }, []);
+
+    function handleToggle() {
+        setIsCollapsed(current => {
+            const next = !current;
+            window.localStorage.setItem('applyhub-sidebar-collapsed', next ? '1' : '0');
+            return next;
+        });
+    }
+
+    return (
+        <aside
+            className={`w-full border-b border-slate-700/80 bg-gradient-to-b from-[#06132c] via-[#0b1e43] to-[#0b2a64] md:flex md:h-full md:shrink-0 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:border-r-slate-700/80 md:transition-[width] md:duration-300 ${
+                isCollapsed ? 'md:w-20' : 'md:w-64'
+            }`}
+        >
+            <div className="px-4 py-4">
+                <Link
+                    href="/app/dashboard"
+                    title="Go to dashboard"
+                    className={`flex min-w-0 items-center gap-3 rounded-xl border border-transparent p-1 transition-colors duration-200 hover:border-slate-500/50 hover:bg-slate-700/30 ${
+                        isCollapsed ? 'md:justify-center' : ''
+                    }`}
+                >
+                    <Image
+                        src="/brand/applyhub-logo.png"
+                        alt="ApplyHub logo"
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-lg border border-cyan-300/50 bg-slate-900/70 object-cover p-0.5"
+                    />
+                    <div className={`${isCollapsed ? 'md:hidden' : ''}`}>
+                        <h1 className="text-2xl font-bold text-slate-100">ApplyHub</h1>
+                    </div>
+                </Link>
+            </div>
+
+            <nav className="grid grid-cols-2 gap-2 px-4 pb-4 md:grid-cols-1 md:gap-1 md:pb-0">
+                {NAV_ITEMS.map(item => {
+                    const isActive = pathname === item.href;
+                    const Icon = item.icon;
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            title={item.label}
+                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
+                                isActive
+                                    ? 'border-cyan-300/40 bg-cyan-300/15 text-cyan-100'
+                                    : 'border-transparent text-slate-300 hover:border-slate-500/50 hover:bg-slate-700/40 hover:text-slate-100'
+                            } ${isCollapsed ? 'md:justify-center md:px-2' : ''}`}
+                        >
+                            <Icon className="h-4 w-4" />
+                            <span className={`${isCollapsed ? 'md:hidden' : ''}`}>{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            <div className="px-4 pb-4 pt-4 md:mt-auto">
+                <button
+                    type="button"
+                    onClick={handleToggle}
+                    title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    className={`inline-flex w-full items-center gap-2 rounded-xl border border-slate-500/40 bg-transparent px-4 py-2 text-sm font-medium text-slate-100 transition-all duration-200 hover:border-slate-300 hover:bg-slate-700/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-0 ${
+                        isCollapsed ? 'md:justify-center md:px-2' : 'justify-center'
+                    }`}
+                >
+                    {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                    <span className={`${isCollapsed ? 'md:hidden' : ''}`}>
+                        {isCollapsed ? 'Expand' : 'Collapse'}
+                    </span>
+                </button>
+            </div>
+        </aside>
+    );
+}
