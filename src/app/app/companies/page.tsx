@@ -158,12 +158,12 @@ export default function CompaniesPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-gray-900">Companies</h2>
-                <p className="mt-1 text-sm text-gray-600">Maintain your target companies watchlist.</p>
+                <h2 className="text-2xl font-bold text-slate-100">Companies</h2>
+                <p className="mt-1 text-sm text-slate-300">Maintain your target companies watchlist.</p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-gray-800">Add Company</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Company</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
@@ -237,13 +237,13 @@ export default function CompaniesPage() {
             </div>
 
             {error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                     {error}
                 </div>
             ) : null}
 
             {successMessage ? (
-                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                     {successMessage}
                 </div>
             ) : null}
@@ -263,7 +263,7 @@ export default function CompaniesPage() {
                     <tbody>
                         {loadingList ? (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-gray-500">
+                                <td colSpan={6} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" /> Loading companies...
                                     </span>
@@ -271,7 +271,7 @@ export default function CompaniesPage() {
                             </tr>
                         ) : companies.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-gray-500">
+                                <td colSpan={6} className="py-12 text-center text-slate-400">
                                     No companies added.
                                 </td>
                             </tr>
@@ -314,7 +314,7 @@ export default function CompaniesPage() {
                                                     href={company.website_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-brand-600 hover:underline"
+                                                    className="text-cyan-300 hover:underline"
                                                 >
                                                     Open
                                                 </Link>

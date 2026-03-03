@@ -43,7 +43,7 @@ export function AppSidebar() {
 
     return (
         <aside
-            className={`w-full border-b border-slate-700/80 bg-gradient-to-b from-[#06132c] via-[#0b1e43] to-[#0b2a64] md:flex md:h-full md:shrink-0 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:border-r-slate-700/80 md:transition-[width] md:duration-300 ${
+            className={`w-full border-b border-cyan-400/20 bg-gradient-to-b from-[#031029] via-[#08204a] to-[#0a2d66] md:flex md:h-full md:shrink-0 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:border-r-cyan-400/20 md:transition-[width] md:duration-300 ${
                 isCollapsed ? 'md:w-20' : 'md:w-64'
             }`}
         >
@@ -51,7 +51,7 @@ export function AppSidebar() {
                 <Link
                     href="/app/dashboard"
                     title="Go to dashboard"
-                    className={`flex min-w-0 items-center gap-3 rounded-xl border border-transparent p-1 transition-colors duration-200 hover:border-slate-500/50 hover:bg-slate-700/30 ${
+                    className={`flex min-w-0 items-center gap-3 rounded-xl border border-transparent p-1 transition-colors duration-200 hover:border-cyan-300/30 hover:bg-cyan-400/10 ${
                         isCollapsed ? 'md:justify-center' : ''
                     }`}
                 >
@@ -79,8 +79,8 @@ export function AppSidebar() {
                             title={item.label}
                             className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
                                 isActive
-                                    ? 'border-cyan-300/40 bg-cyan-300/15 text-cyan-100'
-                                    : 'border-transparent text-slate-300 hover:border-slate-500/50 hover:bg-slate-700/40 hover:text-slate-100'
+                                    ? 'border-cyan-300/50 bg-cyan-300/20 text-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]'
+                                    : 'border-transparent text-slate-300 hover:border-cyan-300/30 hover:bg-slate-800/50 hover:text-slate-100'
                             } ${isCollapsed ? 'md:justify-center md:px-2' : ''}`}
                         >
                             <Icon className="h-4 w-4" />
@@ -95,7 +95,7 @@ export function AppSidebar() {
                     type="button"
                     onClick={handleToggle}
                     title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                    className={`inline-flex w-full items-center gap-2 rounded-xl border border-slate-500/40 bg-transparent px-4 py-2 text-sm font-medium text-slate-100 transition-all duration-200 hover:border-slate-300 hover:bg-slate-700/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-0 ${
+                    className={`inline-flex w-full items-center gap-2 rounded-xl border border-cyan-300/30 bg-transparent px-4 py-2 text-sm font-medium text-slate-100 transition-all duration-200 hover:border-cyan-300/60 hover:bg-cyan-400/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-0 ${
                         isCollapsed ? 'md:justify-center md:px-2' : 'justify-center'
                     }`}
                 >

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 
 type ProfileButtonProps = {
     userEmail: string;
+    userFirstName: string;
 };
 
 function getInitials(email: string) {
@@ -25,7 +26,7 @@ function getInitials(email: string) {
     return username.slice(0, 2).toUpperCase();
 }
 
-export function ProfileButton({ userEmail }: ProfileButtonProps) {
+export function ProfileButton({ userEmail, userFirstName }: ProfileButtonProps) {
     const pathname = usePathname();
     const router = useRouter();
     const initials = getInitials(userEmail);
@@ -70,22 +71,24 @@ export function ProfileButton({ userEmail }: ProfileButtonProps) {
     }
 
     return (
-        <div className="relative" ref={menuRef}>
+        <div className="relative flex items-center gap-3" ref={menuRef}>
+            <span className="text-sm font-medium text-cyan-100">{userFirstName}</span>
+
             <button
                 type="button"
                 title="Open profile menu"
                 onClick={() => setIsOpen(current => !current)}
                 className={`group relative inline-flex h-11 w-11 items-center justify-center rounded-full border text-sm font-semibold tracking-wide text-white transition-all duration-200 ${
                     isOpen
-                        ? 'border-cyan-300/70 bg-cyan-500/30'
-                        : 'border-slate-300 bg-slate-900 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-slate-800'
+                        ? 'border-cyan-300/80 bg-cyan-500/25 shadow-[0_0_0_1px_rgba(34,211,238,0.2)]'
+                        : 'border-cyan-300/35 bg-slate-900/80 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:bg-slate-800'
                 }`}
             >
                 {initials}
             </button>
 
             {isOpen ? (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 text-slate-200 shadow-xl backdrop-blur-xl">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-cyan-300/25 bg-slate-950/95 p-1.5 text-slate-200 shadow-xl backdrop-blur-xl">
                     <p className="truncate px-2 py-1 text-xs text-slate-400">{userEmail}</p>
 
                     <Link

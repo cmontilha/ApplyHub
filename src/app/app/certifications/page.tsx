@@ -172,14 +172,14 @@ export default function CertificationsPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-gray-900">Certifications</h2>
-                <p className="mt-1 text-sm text-gray-600">
+                <h2 className="text-2xl font-bold text-slate-100">Certifications</h2>
+                <p className="mt-1 text-sm text-slate-300">
                     Keep track of certifications with effort and market value.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-gray-800">Add Certification</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Certification</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
@@ -296,13 +296,13 @@ export default function CertificationsPage() {
             </div>
 
             {error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                     {error}
                 </div>
             ) : null}
 
             {successMessage ? (
-                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                     {successMessage}
                 </div>
             ) : null}
@@ -324,7 +324,7 @@ export default function CertificationsPage() {
                     <tbody>
                         {loadingList ? (
                             <tr>
-                                <td colSpan={8} className="py-12 text-center text-gray-500">
+                                <td colSpan={8} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" /> Loading certifications...
                                     </span>
@@ -332,7 +332,7 @@ export default function CertificationsPage() {
                             </tr>
                         ) : certifications.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="py-12 text-center text-gray-500">
+                                <td colSpan={8} className="py-12 text-center text-slate-400">
                                     No certifications added.
                                 </td>
                             </tr>

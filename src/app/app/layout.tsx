@@ -18,15 +18,26 @@ export default async function AppLayout({ children }: AppLayoutProps) {
         redirect('/login');
     }
 
+    const metadataName =
+        typeof user.user_metadata?.full_name === 'string'
+            ? user.user_metadata.full_name.trim()
+            : '';
+    const fallbackName = (user.email ?? 'User').split('@')[0]?.replace(/[._-]/g, ' ') ?? 'User';
+    const firstName = (metadataName || fallbackName).split(/\s+/).filter(Boolean)[0] ?? 'User';
+    const normalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+
     return (
         <div className="min-h-screen md:flex md:h-screen md:overflow-hidden">
             <AppSidebar />
             <div className="w-full md:flex md:min-w-0 md:flex-1 md:flex-col">
-                <header className="sticky top-0 z-20 flex items-center justify-end border-b border-slate-700/80 bg-gradient-to-r from-[#06132c] via-[#0b1e43] to-[#0b2a64] px-4 py-3 md:shrink-0 md:px-8">
-                    <ProfileButton userEmail={user.email ?? 'Signed user'} />
+                <header className="sticky top-0 z-20 flex items-center justify-end border-b border-cyan-400/20 bg-gradient-to-r from-[#031029] via-[#0a1d3f] to-[#0b2b5e] px-4 py-3 md:shrink-0 md:px-8">
+                    <ProfileButton
+                        userEmail={user.email ?? 'Signed user'}
+                        userFirstName={normalizedFirstName}
+                    />
                 </header>
-                <main className="w-full p-4 md:min-h-0 md:flex-1 md:overflow-auto md:p-8">
-                    {children}
+                <main className="app-main w-full p-4 md:min-h-0 md:flex-1 md:overflow-auto md:p-8">
+                    <div className="mx-auto w-full max-w-[1500px]">{children}</div>
                 </main>
             </div>
         </div>

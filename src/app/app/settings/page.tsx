@@ -146,7 +146,7 @@ export default function SettingsPage() {
     if (loadingUser) {
         return (
             <section className="card flex min-h-[220px] items-center justify-center">
-                <span className="inline-flex items-center gap-2 text-slate-600">
+                <span className="inline-flex items-center gap-2 text-slate-300">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading settings...
                 </span>
@@ -157,26 +157,26 @@ export default function SettingsPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-900">Settings</h2>
-                <p className="mt-1 text-sm text-slate-600">Update your account credentials securely.</p>
+                <h2 className="text-2xl font-bold text-slate-100">Settings</h2>
+                <p className="mt-1 text-sm text-slate-300">Update your account credentials securely.</p>
             </header>
 
             <article className="card p-5">
                 <div className="mb-4 flex items-center gap-2">
                     <Mail className="h-4 w-4 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-slate-800">Change Email</h3>
+                    <h3 className="text-sm font-semibold text-slate-100">Change Email</h3>
                 </div>
 
-                <p className="mb-4 text-xs text-slate-500">Current email: {currentEmail}</p>
+                <p className="mb-4 text-xs text-slate-400">Current email: {currentEmail}</p>
 
                 {emailError ? (
-                    <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p className="mb-3 rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                         {emailError}
                     </p>
                 ) : null}
 
                 {emailSuccess ? (
-                    <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                    <p className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                         {emailSuccess}
                     </p>
                 ) : null}
@@ -206,17 +206,17 @@ export default function SettingsPage() {
             <article className="card p-5">
                 <div className="mb-4 flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-slate-800">Change Password</h3>
+                    <h3 className="text-sm font-semibold text-slate-100">Change Password</h3>
                 </div>
 
                 {passwordError ? (
-                    <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p className="mb-3 rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                         {passwordError}
                     </p>
                 ) : null}
 
                 {passwordSuccess ? (
-                    <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                    <p className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                         {passwordSuccess}
                     </p>
                 ) : null}

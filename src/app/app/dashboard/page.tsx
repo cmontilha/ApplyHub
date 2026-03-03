@@ -120,7 +120,7 @@ export default function DashboardPage() {
     const networkingSummary = useMemo(() => {
         if (!data) {
             return {
-                className: 'border-slate-200 bg-slate-50 text-slate-700',
+                className: 'border-slate-700/70 bg-slate-900/70 text-slate-200',
                 text: 'No follow-up data available.',
             };
         }
@@ -133,27 +133,27 @@ export default function DashboardPage() {
 
         if (overdueCount > 0) {
             return {
-                className: 'border-red-200 bg-red-50 text-red-700',
+                className: 'border-red-500/40 bg-red-500/15 text-red-200',
                 text: `${overdueCount} follow-up${overdueCount > 1 ? 's are' : ' is'} overdue.`,
             };
         }
 
         if (dueTodayCount > 0) {
             return {
-                className: 'border-amber-200 bg-amber-50 text-amber-700',
+                className: 'border-amber-500/40 bg-amber-500/15 text-amber-200',
                 text: `${dueTodayCount} follow-up${dueTodayCount > 1 ? 's are' : ' is'} due today.`,
             };
         }
 
         if (dueSoonCount > 0) {
             return {
-                className: 'border-blue-200 bg-blue-50 text-blue-700',
+                className: 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200',
                 text: `${dueSoonCount} follow-up${dueSoonCount > 1 ? 's are' : ' is'} due in the next 7 days.`,
             };
         }
 
         return {
-            className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+            className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200',
             text: 'No overdue follow-ups. Your networking cadence is up to date.',
         };
     }, [data]);
@@ -178,7 +178,7 @@ export default function DashboardPage() {
     if (loading) {
         return (
             <section className="card flex min-h-[280px] items-center justify-center">
-                <span className="inline-flex items-center gap-2 text-gray-500">
+                <span className="inline-flex items-center gap-2 text-slate-400">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading dashboard...
                 </span>
@@ -188,7 +188,7 @@ export default function DashboardPage() {
 
     if (error) {
         return (
-            <section className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <section className="rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                 {error}
             </section>
         );
@@ -201,40 +201,40 @@ export default function DashboardPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-                <p className="mt-1 text-sm text-gray-600">
+                <h2 className="text-2xl font-bold text-slate-100">Dashboard</h2>
+                <p className="mt-1 text-sm text-slate-300">
                     Real-time metrics from your application pipeline.
                 </p>
             </header>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <article className="card p-4">
-                    <p className="text-sm text-gray-500">Total Applications</p>
+                    <p className="text-sm text-slate-400">Total Applications</p>
                     <p className="mt-2 text-3xl font-bold">{data.total_applications}</p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-sm text-gray-500">Total Interviews</p>
+                    <p className="text-sm text-slate-400">Total Interviews</p>
                     <p className="mt-2 text-3xl font-bold">{data.total_interviews}</p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-sm text-gray-500">Total Rejected</p>
+                    <p className="text-sm text-slate-400">Total Rejected</p>
                     <p className="mt-2 text-3xl font-bold">{data.total_rejected}</p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-sm text-gray-500">Total Offers</p>
+                    <p className="text-sm text-slate-400">Total Offers</p>
                     <p className="mt-2 text-3xl font-bold">{data.total_offers}</p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-sm text-gray-500">Referral Applications</p>
+                    <p className="text-sm text-slate-400">Referral Applications</p>
                     <p className="mt-2 text-3xl font-bold">{data.referral_count}</p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-sm text-gray-500">Referral Ratio</p>
+                    <p className="text-sm text-slate-400">Referral Ratio</p>
                     <p className="mt-2 text-3xl font-bold">{referralRatio}</p>
                 </article>
             </div>
@@ -242,18 +242,18 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-800">{chartMeta.title}</h3>
-                        <p className="text-xs text-gray-500">{chartMeta.subtitle}</p>
+                        <h3 className="text-sm font-semibold text-slate-100">{chartMeta.title}</h3>
+                        <p className="text-xs text-slate-400">{chartMeta.subtitle}</p>
                     </div>
 
-                    <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+                    <div className="inline-flex rounded-lg border border-slate-700/70 bg-slate-900/70 p-1">
                         <button
                             type="button"
                             onClick={() => setChartView('monthly')}
                             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                 chartView === 'monthly'
                                     ? 'bg-slate-900 text-white'
-                                    : 'text-slate-600 hover:bg-slate-100'
+                                    : 'text-slate-300 hover:bg-slate-800/80'
                             }`}
                         >
                             Monthly
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                 chartView === 'yearly'
                                     ? 'bg-slate-900 text-white'
-                                    : 'text-slate-600 hover:bg-slate-100'
+                                    : 'text-slate-300 hover:bg-slate-800/80'
                             }`}
                         >
                             Yearly
@@ -275,11 +275,11 @@ export default function DashboardPage() {
                 <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartMeta.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey={chartMeta.xKey} stroke="#6b7280" fontSize={12} />
-                            <YAxis allowDecimals={false} stroke="#6b7280" fontSize={12} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#1e2b47" />
+                            <XAxis dataKey={chartMeta.xKey} stroke="#94a3b8" fontSize={12} />
+                            <YAxis allowDecimals={false} stroke="#94a3b8" fontSize={12} />
                             <Tooltip />
-                            <Bar dataKey="count" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+                            <Bar dataKey="count" fill="#22d3ee" radius={[8, 8, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -288,8 +288,8 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-800">Networking Follow-ups</h3>
-                        <p className="text-xs text-gray-500">Showing the nearest follow-up dates.</p>
+                        <h3 className="text-sm font-semibold text-slate-100">Networking Follow-ups</h3>
+                        <p className="text-xs text-slate-400">Showing the nearest follow-up dates.</p>
                     </div>
                     {data.networking_followups.length > 5 ? (
                         <button
@@ -318,7 +318,7 @@ export default function DashboardPage() {
                 </div>
 
                 {data.networking_followups.length === 0 ? (
-                    <p className="text-sm text-gray-500">No follow-ups scheduled yet.</p>
+                    <p className="text-sm text-slate-400">No follow-ups scheduled yet.</p>
                 ) : (
                     <div className="space-y-3">
                         {(showAllFollowUps
@@ -326,10 +326,10 @@ export default function DashboardPage() {
                             : data.networking_followups.slice(0, 5)
                         ).map(item => {
                             const badgeStyles = item.is_overdue
-                                ? 'border border-red-200 bg-red-50 text-red-700'
+                                ? 'border border-red-500/40 bg-red-500/15 text-red-200'
                                 : item.days_until_follow_up <= 7
-                                  ? 'border border-amber-200 bg-amber-50 text-amber-700'
-                                  : 'border border-emerald-200 bg-emerald-50 text-emerald-700';
+                                  ? 'border border-amber-500/40 bg-amber-500/15 text-amber-200'
+                                  : 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-200';
 
                             const daysLabel = item.is_overdue
                                 ? `${Math.abs(item.days_until_follow_up)}d overdue`
@@ -340,19 +340,19 @@ export default function DashboardPage() {
                             return (
                                 <article
                                     key={item.id}
-                                    className="rounded-xl border border-slate-200 bg-white p-3"
+                                    className="rounded-xl border border-slate-700/70 bg-slate-900/70 p-3"
                                 >
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-slate-800">{item.name}</p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-sm font-semibold text-slate-100">{item.name}</p>
+                                            <p className="text-xs text-slate-400">
                                                 {[item.company, item.role_title].filter(Boolean).join(' • ') || '-'}
                                             </p>
-                                            <p className="mt-1 text-xs text-slate-500">
+                                            <p className="mt-1 text-xs text-slate-400">
                                                 Last contact:{' '}
                                                 {formatIsoDate(item.last_contact_at)}
                                             </p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-slate-400">
                                                 Next follow-up: {formatIsoDate(item.next_follow_up_at)}
                                             </p>
                                         </div>

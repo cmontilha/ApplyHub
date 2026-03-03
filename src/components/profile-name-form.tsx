@@ -58,13 +58,13 @@ export function ProfileNameForm({ initialName }: ProfileNameFormProps) {
     return (
         <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             {error ? (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <p className="rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                     {error}
                 </p>
             ) : null}
 
             {success ? (
-                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                     {success}
                 </p>
             ) : null}

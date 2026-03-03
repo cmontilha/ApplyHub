@@ -210,14 +210,14 @@ export default function NetworkingPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-gray-900">Networking</h2>
-                <p className="mt-1 text-sm text-gray-600">
+                <h2 className="text-2xl font-bold text-slate-100">Networking</h2>
+                <p className="mt-1 text-sm text-slate-300">
                     Manage people, contacts, and your 5-month follow-up cycle.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-gray-800">Add Contact</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Contact</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
@@ -349,7 +349,7 @@ export default function NetworkingPage() {
                     </div>
 
                     <div className="md:col-span-2 xl:col-span-4">
-                        <p className="mb-2 text-xs text-slate-500">
+                        <p className="mb-2 text-xs text-slate-400">
                             Add at least one contact method (email, phone, or LinkedIn).
                         </p>
                         <button
@@ -365,13 +365,13 @@ export default function NetworkingPage() {
             </div>
 
             {error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
                     {error}
                 </div>
             ) : null}
 
             {successMessage ? (
-                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
                     {successMessage}
                 </div>
             ) : null}
@@ -395,7 +395,7 @@ export default function NetworkingPage() {
                     <tbody>
                         {loadingList ? (
                             <tr>
-                                <td colSpan={10} className="py-12 text-center text-gray-500">
+                                <td colSpan={10} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" /> Loading contacts...
                                     </span>
@@ -403,7 +403,7 @@ export default function NetworkingPage() {
                             </tr>
                         ) : contacts.length === 0 ? (
                             <tr>
-                                <td colSpan={10} className="py-12 text-center text-gray-500">
+                                <td colSpan={10} className="py-12 text-center text-slate-400">
                                     No contacts added.
                                 </td>
                             </tr>
@@ -513,7 +513,7 @@ export default function NetworkingPage() {
                                                     href={contact.linkedin_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-brand-600 hover:underline"
+                                                    className="inline-flex items-center gap-1 text-cyan-300 hover:underline"
                                                 >
                                                     Profile <ExternalLink className="h-3 w-3" />
                                                 </Link>

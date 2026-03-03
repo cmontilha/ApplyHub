@@ -42,8 +42,8 @@ export default async function ProfilePage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-900">Profile</h2>
-                <p className="mt-1 text-sm text-slate-600">
+                <h2 className="text-2xl font-bold text-slate-100">Profile</h2>
+                <p className="mt-1 text-sm text-slate-300">
                     Account and activity overview inside ApplyHub.
                 </p>
             </header>
@@ -54,12 +54,12 @@ export default async function ProfilePage() {
                         {displayName.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                        <h3 className="text-xl font-semibold text-slate-900">{displayName}</h3>
-                        <p className="mt-1 inline-flex items-center gap-2 text-sm text-slate-600">
-                            <Mail className="h-4 w-4 text-slate-500" />
+                        <h3 className="text-xl font-semibold text-slate-100">{displayName}</h3>
+                        <p className="mt-1 inline-flex items-center gap-2 text-sm text-slate-300">
+                            <Mail className="h-4 w-4 text-slate-400" />
                             {user.email}
                         </p>
-                        <p className="mt-2 inline-flex items-center gap-2 text-xs text-emerald-700">
+                        <p className="mt-2 inline-flex items-center gap-2 text-xs text-emerald-200">
                             <ShieldCheck className="h-4 w-4" />
                             Authenticated via Supabase Auth
                         </p>
@@ -71,24 +71,24 @@ export default async function ProfilePage() {
 
             <div className="grid gap-4 md:grid-cols-3">
                 <article className="card p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">Applications</p>
-                    <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-900">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Applications</p>
+                    <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-100">
                         <Briefcase className="h-5 w-5 text-blue-600" />
                         {applicationsCount}
                     </p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">Companies</p>
-                    <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-900">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Companies</p>
+                    <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-100">
                         <Building2 className="h-5 w-5 text-blue-600" />
                         {companiesCount}
                     </p>
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">Certifications</p>
-                    <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-900">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Certifications</p>
+                    <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-100">
                         <GraduationCap className="h-5 w-5 text-blue-600" />
                         {certificationsCount}
                     </p>
@@ -96,8 +96,8 @@ export default async function ProfilePage() {
             </div>
 
             <article className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-800">Session</h3>
-                <p className="mt-1 text-sm text-slate-600">End your session securely from your profile.</p>
+                <h3 className="text-sm font-semibold text-slate-100">Session</h3>
+                <p className="mt-1 text-sm text-slate-300">End your session securely from your profile.</p>
                 <div className="mt-4 max-w-xs">
                     <LogoutButton />
                 </div>
