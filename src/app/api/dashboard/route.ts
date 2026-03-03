@@ -26,6 +26,21 @@ type DashboardFollowUpItem = {
     is_overdue: boolean;
 };
 
+type DashboardApplicationItem = {
+    id: string;
+    applied_date: string;
+    company: string;
+    role_title: string;
+    work_mode: string;
+    location: string | null;
+    job_url: string | null;
+    status: string;
+    category: string;
+    recruiter_contact_notes: string | null;
+    notes: string | null;
+    created_at: string;
+};
+
 function monthKeyToLabel(monthKey: string) {
     const [year, month] = monthKey.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, 1));
@@ -57,14 +72,17 @@ export async function GET() {
 
     const { data, error } = await supabase
         .from('applications')
-        .select('status, category, applied_date')
-        .order('applied_date', { ascending: true });
+        .select(
+            'id, applied_date, company, role_title, work_mode, location, job_url, status, category, recruiter_contact_notes, notes, created_at'
+        )
+        .order('applied_date', { ascending: false })
+        .order('created_at', { ascending: false });
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const applications = data ?? [];
+    const applications: DashboardApplicationItem[] = data ?? [];
 
     const totals = {
         total_applications: applications.length,
@@ -135,6 +153,7 @@ export async function GET() {
         ...totals,
         applications_per_month,
         applications_per_year,
+        applications_list: applications,
         due_follow_ups: networking_followups.filter(item => item.days_until_follow_up <= 0).length,
         networking_followups,
     });

@@ -1,7 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Loader2, Trash2 } from 'lucide-react';
 import {
     APPLICATION_CATEGORY_OPTIONS,
@@ -63,6 +62,22 @@ function getErrorMessage(error: unknown) {
     return 'Something went wrong';
 }
 
+function toSafeExternalUrl(value: string | null) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -81,6 +96,15 @@ export default function ApplicationsPage() {
     const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const appliedDateInputRef = useRef<HTMLInputElement | null>(null);
+
+    function openAppliedDatePicker() {
+        const input = appliedDateInputRef.current as (HTMLInputElement & {
+            showPicker?: () => void;
+        }) | null;
+
+        input?.showPicker?.();
+    }
 
     async function loadApplications() {
         setLoadingList(true);
@@ -198,10 +222,13 @@ export default function ApplicationsPage() {
                         </label>
                         <input
                             id="applied_date"
+                            ref={appliedDateInputRef}
                             type="date"
                             required
-                            className="input"
+                            className="input cursor-pointer"
                             value={formValues.applied_date}
+                            onClick={openAppliedDatePicker}
+                            onFocus={openAppliedDatePicker}
                             onChange={event =>
                                 setFormValues(current => ({
                                     ...current,
@@ -429,13 +456,15 @@ export default function ApplicationsPage() {
                             <th>Job URL</th>
                             <th>Status</th>
                             <th>Category</th>
+                            <th className="min-w-[280px]">Recruiter Notes</th>
+                            <th className="min-w-[340px]">Notes</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loadingList ? (
                             <tr>
-                                <td colSpan={9} className="py-12 text-center text-slate-400">
+                                <td colSpan={11} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" /> Loading applications...
                                     </span>
@@ -443,7 +472,7 @@ export default function ApplicationsPage() {
                             </tr>
                         ) : applications.length === 0 ? (
                             <tr>
-                                <td colSpan={9} className="py-12 text-center text-slate-400">
+                                <td colSpan={11} className="py-12 text-center text-slate-400">
                                     No applications yet.
                                 </td>
                             </tr>
@@ -460,18 +489,21 @@ export default function ApplicationsPage() {
                                         <td>{toLabel(application.work_mode)}</td>
                                         <td>{application.location || '-'}</td>
                                         <td>
-                                            {application.job_url ? (
-                                                <Link
-                                                    href={application.job_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-cyan-300 hover:underline"
-                                                >
-                                                    Open
-                                                </Link>
-                                            ) : (
-                                                '-'
-                                            )}
+                                            {(() => {
+                                                const safeJobUrl = toSafeExternalUrl(application.job_url);
+                                                return safeJobUrl ? (
+                                                    <a
+                                                        href={safeJobUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-cyan-300 hover:underline"
+                                                    >
+                                                        Open
+                                                    </a>
+                                                ) : (
+                                                    '-'
+                                                );
+                                            })()}
                                         </td>
                                         <td>
                                             <select
@@ -508,6 +540,12 @@ export default function ApplicationsPage() {
                                                     </option>
                                                 ))}
                                             </select>
+                                        </td>
+                                        <td className="min-w-[280px] max-w-[380px] whitespace-normal break-words align-top text-slate-300">
+                                            {application.recruiter_contact_notes || '-'}
+                                        </td>
+                                        <td className="min-w-[340px] max-w-[480px] whitespace-normal break-words align-top text-slate-300">
+                                            {application.notes || '-'}
                                         </td>
                                         <td>
                                             <button

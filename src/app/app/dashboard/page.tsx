@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { CheckCircle2, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Trash2 } from 'lucide-react';
+import { toLabel } from '@/lib/constants';
+import type { ApplicationCategory, ApplicationStatus, WorkMode } from '@/types/database';
 
 type DashboardFollowUpItem = {
     id: string;
@@ -34,10 +36,27 @@ type DashboardData = {
         year: string;
         count: number;
     }>;
+    applications_list: DashboardApplicationItem[];
     networking_followups: DashboardFollowUpItem[];
 };
 
 type ChartView = 'monthly' | 'yearly';
+
+type DashboardApplicationItem = {
+    id: string;
+    applied_date: string;
+    company: string;
+    role_title: string;
+    work_mode: WorkMode;
+    location: string | null;
+    job_url: string | null;
+    status: ApplicationStatus;
+    category: ApplicationCategory;
+    recruiter_contact_notes: string | null;
+    notes: string | null;
+};
+
+const APPLICATIONS_PER_PAGE = 10;
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -58,6 +77,22 @@ function formatIsoDate(isoDate: string | null) {
     return new Date(year, month - 1, day).toLocaleDateString();
 }
 
+function toSafeExternalUrl(value: string | null) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
 export default function DashboardPage() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -65,6 +100,9 @@ export default function DashboardPage() {
     const [showAllFollowUps, setShowAllFollowUps] = useState(false);
     const [followUpSubmittingId, setFollowUpSubmittingId] = useState<string | null>(null);
     const [chartView, setChartView] = useState<ChartView>('monthly');
+    const [companyFilter, setCompanyFilter] = useState('');
+    const [applicationsPage, setApplicationsPage] = useState(1);
+    const [deletingApplicationId, setDeletingApplicationId] = useState<string | null>(null);
 
     async function loadDashboard() {
         setLoading(true);
@@ -83,6 +121,10 @@ export default function DashboardPage() {
     useEffect(() => {
         void loadDashboard();
     }, []);
+
+    useEffect(() => {
+        setApplicationsPage(1);
+    }, [companyFilter, data?.applications_list.length]);
 
     const referralRatio = useMemo(() => {
         if (!data || data.total_applications === 0) return '0%';
@@ -158,6 +200,43 @@ export default function DashboardPage() {
         };
     }, [data]);
 
+    const filteredApplications = useMemo(() => {
+        if (!data) return [];
+        const normalizedFilter = companyFilter.trim().toLowerCase();
+        if (!normalizedFilter) return data.applications_list;
+        return data.applications_list.filter(item =>
+            item.company.toLowerCase().includes(normalizedFilter)
+        );
+    }, [companyFilter, data]);
+
+    const totalApplicationsPages = useMemo(() => {
+        return Math.max(1, Math.ceil(filteredApplications.length / APPLICATIONS_PER_PAGE));
+    }, [filteredApplications.length]);
+
+    useEffect(() => {
+        if (applicationsPage > totalApplicationsPages) {
+            setApplicationsPage(totalApplicationsPages);
+        }
+    }, [applicationsPage, totalApplicationsPages]);
+
+    const paginatedApplications = useMemo(() => {
+        const safePage = Math.min(applicationsPage, totalApplicationsPages);
+        const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
+        return filteredApplications.slice(startIndex, startIndex + APPLICATIONS_PER_PAGE);
+    }, [applicationsPage, filteredApplications, totalApplicationsPages]);
+
+    const applicationsPageSummary = useMemo(() => {
+        if (filteredApplications.length === 0) {
+            return 'Showing 0 of 0';
+        }
+
+        const safePage = Math.min(applicationsPage, totalApplicationsPages);
+        const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
+        const from = startIndex + 1;
+        const to = Math.min(startIndex + APPLICATIONS_PER_PAGE, filteredApplications.length);
+        return `Showing ${from}-${to} of ${filteredApplications.length}`;
+    }, [applicationsPage, filteredApplications.length, totalApplicationsPages]);
+
     async function handleMarkFollowUpDone(contactId: string) {
         setFollowUpSubmittingId(contactId);
         setError(null);
@@ -172,6 +251,31 @@ export default function DashboardPage() {
             setError(getErrorMessage(followUpError));
         } finally {
             setFollowUpSubmittingId(null);
+        }
+    }
+
+    async function handleDeleteDashboardApplication(applicationId: string) {
+        const confirmed = window.confirm('Delete this application?');
+        if (!confirmed) return;
+
+        setDeletingApplicationId(applicationId);
+        setError(null);
+
+        try {
+            const response = await fetch(`/api/applications/${applicationId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const payload = await response.json().catch(() => null);
+                throw new Error(payload?.error ?? 'Request failed');
+            }
+
+            await loadDashboard();
+        } catch (deleteError) {
+            setError(getErrorMessage(deleteError));
+        } finally {
+            setDeletingApplicationId(null);
         }
     }
 
@@ -282,6 +386,159 @@ export default function DashboardPage() {
                             <Bar dataKey="count" fill="#22d3ee" radius={[8, 8, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-100">Latest Applications</h3>
+                        <p className="text-xs text-slate-400">
+                            Showing your most recent applications with pagination.
+                        </p>
+                    </div>
+
+                    <div className="w-full max-w-sm">
+                        <label htmlFor="dashboard-company-filter" className="label">
+                            Filter by company
+                        </label>
+                        <input
+                            id="dashboard-company-filter"
+                            type="text"
+                            className="input"
+                            placeholder="Search company name..."
+                            value={companyFilter}
+                            onChange={event => setCompanyFilter(event.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="table-wrapper">
+                    <table className="min-w-[1600px]">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Company</th>
+                                <th>Role</th>
+                                <th>Work Mode</th>
+                                <th>Location</th>
+                                <th>Job URL</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                                <th className="min-w-[260px]">Recruiter Notes</th>
+                                <th className="min-w-[320px]">Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paginatedApplications.length === 0 ? (
+                                <tr>
+                                    <td colSpan={11} className="py-10 text-center text-slate-400">
+                                        No applications found for this filter.
+                                    </td>
+                                </tr>
+                            ) : (
+                                paginatedApplications.map(application => {
+                                    const safeJobUrl = toSafeExternalUrl(application.job_url);
+                                    const deletingRow = deletingApplicationId === application.id;
+
+                                    return (
+                                        <tr key={application.id}>
+                                            <td>{application.applied_date}</td>
+                                            <td>{application.company}</td>
+                                            <td>{application.role_title}</td>
+                                            <td>{toLabel(application.work_mode)}</td>
+                                            <td>{application.location || '-'}</td>
+                                            <td>
+                                                {safeJobUrl ? (
+                                                    <a
+                                                        href={safeJobUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-cyan-300 hover:underline"
+                                                    >
+                                                        Open
+                                                    </a>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </td>
+                                            <td>{toLabel(application.status)}</td>
+                                            <td>{toLabel(application.category)}</td>
+                                            <td className="min-w-[260px] max-w-[360px] whitespace-normal break-words align-top text-slate-300">
+                                                {application.recruiter_contact_notes || '-'}
+                                            </td>
+                                            <td className="min-w-[320px] max-w-[480px] whitespace-normal break-words align-top text-slate-300">
+                                                {application.notes || '-'}
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    className="btn-danger"
+                                                    disabled={deletingRow}
+                                                    onClick={() =>
+                                                        handleDeleteDashboardApplication(application.id)
+                                                    }
+                                                >
+                                                    {deletingRow ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-slate-400">{applicationsPageSummary}</p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            disabled={applicationsPage <= 1}
+                            onClick={() =>
+                                setApplicationsPage(current => Math.max(1, current - 1))
+                            }
+                        >
+                            Previous
+                        </button>
+
+                        {Array.from({ length: totalApplicationsPages }, (_, index) => index + 1).map(page => (
+                            <button
+                                key={page}
+                                type="button"
+                                onClick={() => setApplicationsPage(page)}
+                                className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                    applicationsPage === page
+                                        ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                        : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            disabled={applicationsPage >= totalApplicationsPages}
+                            onClick={() =>
+                                setApplicationsPage(current =>
+                                    Math.min(totalApplicationsPages, current + 1)
+                                )
+                            }
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             </div>
 
