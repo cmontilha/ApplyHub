@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { AuthAnimatedHero } from '@/components/auth-animated-hero';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -69,19 +70,18 @@ export default function SignupPage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[#030712]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(14,165,233,0.20),transparent_33%),radial-gradient(circle_at_80%_88%,rgba(37,99,235,0.24),transparent_35%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:30px_30px] opacity-40" />
+            <AuthAnimatedHero />
 
-            <div className="relative flex min-h-screen items-center justify-center p-4">
-                <div className="w-full max-w-md">
+            <div className="relative flex min-h-screen items-center p-4 md:p-8 lg:p-12">
+                <div className="w-full max-w-md md:ml-auto md:mr-12 lg:mr-24">
                     <div className="mb-8 flex items-center justify-center gap-3">
                         <Image
                             src="/brand/applyhub-logo.png"
                             alt="ApplyHub logo"
-                            width={56}
-                            height={56}
+                            width={72}
+                            height={72}
                             priority
-                            className="h-14 w-14 rounded-xl border border-cyan-300/40 bg-slate-900/70 object-cover p-1"
+                            className="h-[72px] w-[72px] rounded-xl bg-slate-900/70 object-cover p-1"
                         />
                         <span className="text-2xl font-bold tracking-tight text-slate-100">ApplyHub</span>
                     </div>
