@@ -118,6 +118,14 @@ export function AuthAnimatedHero() {
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/35 to-slate-950/55" />
             <div
                 aria-hidden
+                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] bg-[radial-gradient(circle,rgba(45,212,191,0.38)_1px,transparent_1px),radial-gradient(circle,rgba(56,189,248,0.30)_1px,transparent_1px)] [background-size:18px_18px,26px_26px] [background-position:0_0,10px_12px] opacity-30"
+            />
+            <div
+                aria-hidden
+                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] bg-[radial-gradient(ellipse_at_72%_46%,rgba(34,211,238,0.22),transparent_62%)]"
+            />
+            <div
+                aria-hidden
                 className="pointer-events-none absolute -bottom-3 right-0 h-24 w-44 bg-[radial-gradient(120%_120%_at_100%_100%,rgba(1,9,30,0.99)_0%,rgba(1,9,30,0.94)_38%,rgba(1,9,30,0.58)_72%,rgba(1,9,30,0)_100%)] md:h-28 md:w-52"
             />
         </>
