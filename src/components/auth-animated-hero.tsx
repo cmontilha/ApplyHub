@@ -2,25 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const FRAME_COUNT = 80;
-const FRAME_DURATION_MS = 84;
-const PING_PONG_FRAME_COUNT = FRAME_COUNT * 2 - 2;
+const HERO_IMAGE_SRC = '/hero/auth-background/login-hero.jpeg';
 const BACKGROUND_VERTICAL_SHIFT = 0.035;
 const BACKGROUND_HORIZONTAL_COMPOSITION = 0.12;
 
-const HERO_FRAMES = Array.from({ length: FRAME_COUNT }, (_, index) => {
-    const frame = index.toString().padStart(3, '0');
-    return `/hero/auth-sequence/frame-${frame}.jpg`;
-});
-
 export function AuthAnimatedHero() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const imagesRef = useRef<HTMLImageElement[]>([]);
+    const imageRef = useRef<HTMLImageElement | null>(null);
     const viewportRef = useRef({ width: 0, height: 0, dpr: 1 });
-    const animationRef = useRef<number>();
-    const animationStartRef = useRef<number | null>(null);
-
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [isReady, setIsReady] = useState(false);
 
     const resizeCanvas = useCallback(() => {
@@ -47,9 +36,9 @@ export function AuthAnimatedHero() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }, []);
 
-    const drawFrame = useCallback((frameIndex: number) => {
+    const drawBackground = useCallback(() => {
         const canvas = canvasRef.current;
-        const image = imagesRef.current[frameIndex];
+        const image = imageRef.current;
         if (!canvas || !image) {
             return;
         }
@@ -78,94 +67,42 @@ export function AuthAnimatedHero() {
 
     useEffect(() => {
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        return () => window.removeEventListener('resize', resizeCanvas);
-    }, [resizeCanvas]);
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
-
-        updatePreference();
-        mediaQuery.addEventListener?.('change', updatePreference);
-        mediaQuery.addListener?.(updatePreference);
-
-        return () => {
-            mediaQuery.removeEventListener?.('change', updatePreference);
-            mediaQuery.removeListener?.(updatePreference);
+        const handleResize = () => {
+            resizeCanvas();
+            drawBackground();
         };
-    }, []);
+        window.addEventListener('resize', handleResize);
+
+        return () => window.removeEventListener('resize', handleResize);
+    }, [drawBackground, resizeCanvas]);
 
     useEffect(() => {
         let isMounted = true;
+        const image = new window.Image();
+        image.decoding = 'async';
+        image.src = HERO_IMAGE_SRC;
 
-        const preloadTasks = HERO_FRAMES.map(frameSrc => {
-            return new Promise<HTMLImageElement>(resolve => {
-                const image = new window.Image();
-                image.decoding = 'async';
-                image.src = frameSrc;
-
-                const onComplete = () => resolve(image);
-
-                if (image.complete) {
-                    resolve(image);
-                    return;
-                }
-
-                image.onload = onComplete;
-                image.onerror = onComplete;
-            });
-        });
-
-        Promise.all(preloadTasks).then(images => {
+        const onComplete = () => {
             if (!isMounted) {
                 return;
             }
 
-            imagesRef.current = images;
+            imageRef.current = image;
             setIsReady(true);
-            drawFrame(0);
-        });
+            drawBackground();
+        };
+
+        if (image.complete) {
+            onComplete();
+        } else {
+            image.onload = onComplete;
+            image.onerror = onComplete;
+        }
 
         return () => {
             isMounted = false;
         };
-    }, [drawFrame]);
-
-    useEffect(() => {
-        if (!isReady) {
-            return;
-        }
-
-        if (prefersReducedMotion) {
-            drawFrame(0);
-            return;
-        }
-
-        const animate = (timestamp: number) => {
-            if (animationStartRef.current === null) {
-                animationStartRef.current = timestamp;
-            }
-
-            const elapsedMs = timestamp - animationStartRef.current;
-            const cycleFrame = Math.floor(elapsedMs / FRAME_DURATION_MS) % PING_PONG_FRAME_COUNT;
-            const frameIndex =
-                cycleFrame < FRAME_COUNT ? cycleFrame : PING_PONG_FRAME_COUNT - cycleFrame;
-
-            drawFrame(frameIndex);
-            animationRef.current = window.requestAnimationFrame(animate);
-        };
-
-        animationStartRef.current = null;
-        animationRef.current = window.requestAnimationFrame(animate);
-
-        return () => {
-            if (animationRef.current) {
-                window.cancelAnimationFrame(animationRef.current);
-            }
-        };
-    }, [drawFrame, isReady, prefersReducedMotion]);
+    }, [drawBackground]);
 
     return (
         <>
