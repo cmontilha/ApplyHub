@@ -2,6 +2,7 @@ import type {
     ApplicationCategory,
     ApplicationStatus,
     CertDifficulty,
+    WebsiteApplicationType,
     WorkMode,
 } from '@/types/database';
 
@@ -19,6 +20,11 @@ export const APPLICATION_CATEGORY_OPTIONS: ApplicationCategory[] = [
     'recruiter_contact',
 ];
 export const CERT_DIFFICULTY_OPTIONS: CertDifficulty[] = ['easy', 'medium', 'hard'];
+export const WEBSITE_APPLICATION_TYPE_OPTIONS: WebsiteApplicationType[] = [
+    'both',
+    'nacional',
+    'internacional',
+];
 
 export function toLabel(value: string) {
     return value

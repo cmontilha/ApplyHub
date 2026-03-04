@@ -28,7 +28,7 @@ export default function SignupPage() {
             return;
         }
 
-        const emailRedirectTo = `${window.location.origin}/auth/confirm?next=/app/applications`;
+        const emailRedirectTo = `${window.location.origin}/auth/confirm?next=/app/dashboard`;
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -58,7 +58,7 @@ export default function SignupPage() {
                 return;
             }
 
-            router.replace('/app/applications');
+            router.replace('/app/dashboard');
             router.refresh();
             return;
         }

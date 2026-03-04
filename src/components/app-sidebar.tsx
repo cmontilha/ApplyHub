@@ -10,7 +10,10 @@ import {
     Building2,
     ChevronLeft,
     ChevronRight,
+    FileText,
+    Globe2,
     GraduationCap,
+    MessageSquare,
     Users,
 } from 'lucide-react';
 
@@ -20,6 +23,9 @@ const NAV_ITEMS = [
     { href: '/app/companies', label: 'Companies', icon: Building2 },
     { href: '/app/networking', label: 'Networking', icon: Users },
     { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
+    { href: '/app/pitch', label: 'Pitch', icon: MessageSquare },
+    { href: '/app/websites-to-apply', label: 'Websites To Apply', icon: Globe2 },
+    { href: '/app/tips-for-resume', label: 'Tips for Resume', icon: FileText },
 ];
 
 export function AppSidebar() {

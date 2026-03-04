@@ -41,6 +41,21 @@ type DashboardApplicationItem = {
     created_at: string;
 };
 
+type DashboardWebsiteItem = {
+    id: string;
+    name: string;
+    website_url: string;
+    type: 'both' | 'nacional' | 'internacional';
+    created_at: string;
+};
+
+type DashboardPitchItem = {
+    id: string;
+    name: string;
+    pitch: string;
+    created_at: string;
+};
+
 function monthKeyToLabel(monthKey: string) {
     const [year, month] = monthKey.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, 1));
@@ -149,11 +164,35 @@ export async function GET() {
             };
         });
 
+    const { data: websitesData, error: websitesError } = await supabase
+        .from('websites_to_apply')
+        .select('id, name, website_url, type, created_at')
+        .order('created_at', { ascending: false });
+
+    if (websitesError) {
+        return NextResponse.json({ error: websitesError.message }, { status: 500 });
+    }
+
+    const websites_to_apply: DashboardWebsiteItem[] = websitesData ?? [];
+
+    const { data: pitchesData, error: pitchesError } = await supabase
+        .from('pitches')
+        .select('id, name, pitch, created_at')
+        .order('created_at', { ascending: false });
+
+    if (pitchesError) {
+        return NextResponse.json({ error: pitchesError.message }, { status: 500 });
+    }
+
+    const pitches: DashboardPitchItem[] = pitchesData ?? [];
+
     return NextResponse.json({
         ...totals,
         applications_per_month,
         applications_per_year,
         applications_list: applications,
+        websites_to_apply,
+        pitches,
         due_follow_ups: networking_followups.filter(item => item.days_until_follow_up <= 0).length,
         networking_followups,
     });

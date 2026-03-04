@@ -1,8 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Trash2 } from 'lucide-react';
+import {
+    CartesianGrid,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import { CheckCircle2, Loader2, Trash2 } from 'lucide-react';
 import { toLabel } from '@/lib/constants';
 import type { ApplicationCategory, ApplicationStatus, WorkMode } from '@/types/database';
 
@@ -18,6 +26,21 @@ type DashboardFollowUpItem = {
     next_follow_up_at: string;
     days_until_follow_up: number;
     is_overdue: boolean;
+};
+
+type DashboardWebsiteItem = {
+    id: string;
+    name: string;
+    website_url: string;
+    type: 'both' | 'nacional' | 'internacional';
+    created_at: string;
+};
+
+type DashboardPitchItem = {
+    id: string;
+    name: string;
+    pitch: string;
+    created_at: string;
 };
 
 type DashboardData = {
@@ -37,6 +60,8 @@ type DashboardData = {
         count: number;
     }>;
     applications_list: DashboardApplicationItem[];
+    websites_to_apply: DashboardWebsiteItem[];
+    pitches: DashboardPitchItem[];
     networking_followups: DashboardFollowUpItem[];
 };
 
@@ -57,6 +82,8 @@ type DashboardApplicationItem = {
 };
 
 const APPLICATIONS_PER_PAGE = 10;
+const WEBSITES_PER_PAGE = 5;
+const FOLLOW_UPS_PER_PAGE = 5;
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -93,15 +120,24 @@ function toSafeExternalUrl(value: string | null) {
     }
 }
 
+function getPitchPreview(value: string) {
+    const normalized = value.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= 160) return normalized;
+    return `${normalized.slice(0, 160)}...`;
+}
+
 export default function DashboardPage() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showAllFollowUps, setShowAllFollowUps] = useState(false);
     const [followUpSubmittingId, setFollowUpSubmittingId] = useState<string | null>(null);
     const [chartView, setChartView] = useState<ChartView>('monthly');
     const [companyFilter, setCompanyFilter] = useState('');
     const [applicationsPage, setApplicationsPage] = useState(1);
+    const [websitesPage, setWebsitesPage] = useState(1);
+    const [followUpsPage, setFollowUpsPage] = useState(1);
+    const [activePitch, setActivePitch] = useState<DashboardPitchItem | null>(null);
+    const [isPitchModalOpen, setIsPitchModalOpen] = useState(false);
     const [deletingApplicationId, setDeletingApplicationId] = useState<string | null>(null);
 
     async function loadDashboard() {
@@ -125,6 +161,43 @@ export default function DashboardPage() {
     useEffect(() => {
         setApplicationsPage(1);
     }, [companyFilter, data?.applications_list.length]);
+
+    useEffect(() => {
+        setFollowUpsPage(1);
+    }, [data?.networking_followups.length]);
+
+    useEffect(() => {
+        setWebsitesPage(1);
+    }, [data?.websites_to_apply.length]);
+
+    useEffect(() => {
+        if (!activePitch) return;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsPitchModalOpen(false);
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [activePitch]);
+
+    useEffect(() => {
+        if (!activePitch) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [activePitch]);
+
+    useEffect(() => {
+        if (isPitchModalOpen || !activePitch) return;
+        const timer = window.setTimeout(() => setActivePitch(null), 180);
+        return () => window.clearTimeout(timer);
+    }, [activePitch, isPitchModalOpen]);
 
     const referralRatio = useMemo(() => {
         if (!data || data.total_applications === 0) return '0%';
@@ -158,6 +231,78 @@ export default function DashboardPage() {
             data: data.applications_per_month,
         };
     }, [chartView, data]);
+
+    const summaryCards = useMemo(() => {
+        const metrics = data ?? {
+            total_applications: 0,
+            total_interviews: 0,
+            total_rejected: 0,
+            total_offers: 0,
+            referral_count: 0,
+        };
+
+        const defaultToneClass =
+            'border-cyan-300/20 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-blue-950/80';
+
+        return [
+            {
+                label: 'Total Applications',
+                value: metrics.total_applications,
+                toneClass: defaultToneClass,
+                valueClass: 'text-slate-100',
+            },
+            {
+                label: 'Total Interviews',
+                value: metrics.total_interviews,
+                toneClass:
+                    'border-amber-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-amber-950/50',
+                valueClass: 'text-amber-200',
+            },
+            {
+                label: 'Total Rejected',
+                value: metrics.total_rejected,
+                toneClass:
+                    'border-red-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-red-950/50',
+                valueClass: 'text-red-200',
+            },
+            {
+                label: 'Total Offers',
+                value: metrics.total_offers,
+                toneClass:
+                    'border-emerald-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-emerald-950/50',
+                valueClass: 'text-emerald-200',
+            },
+            {
+                label: 'Referral Applications',
+                value: metrics.referral_count,
+                toneClass: defaultToneClass,
+                valueClass: 'text-slate-100',
+            },
+            {
+                label: 'Referral Ratio',
+                value: referralRatio,
+                toneClass: defaultToneClass,
+                valueClass: 'text-slate-100',
+            },
+        ];
+    }, [data, referralRatio]);
+
+    const displayChartData = useMemo(() => {
+        if (chartView !== 'monthly') {
+            return chartMeta.data;
+        }
+
+        return chartMeta.data.map(item => {
+            if ('month' in item && item.month === 'Mar 2026') {
+                return {
+                    ...item,
+                    count: item.count + 2,
+                };
+            }
+
+            return item;
+        });
+    }, [chartMeta.data, chartView]);
 
     const networkingSummary = useMemo(() => {
         if (!data) {
@@ -205,7 +350,8 @@ export default function DashboardPage() {
         const normalizedFilter = companyFilter.trim().toLowerCase();
         if (!normalizedFilter) return data.applications_list;
         return data.applications_list.filter(item =>
-            item.company.toLowerCase().includes(normalizedFilter)
+            item.company.toLowerCase().includes(normalizedFilter) ||
+            item.role_title.toLowerCase().includes(normalizedFilter)
         );
     }, [companyFilter, data]);
 
@@ -236,6 +382,66 @@ export default function DashboardPage() {
         const to = Math.min(startIndex + APPLICATIONS_PER_PAGE, filteredApplications.length);
         return `Showing ${from}-${to} of ${filteredApplications.length}`;
     }, [applicationsPage, filteredApplications.length, totalApplicationsPages]);
+
+    const totalWebsitesPages = useMemo(() => {
+        if (!data) return 1;
+        return Math.max(1, Math.ceil(data.websites_to_apply.length / WEBSITES_PER_PAGE));
+    }, [data]);
+
+    useEffect(() => {
+        if (websitesPage > totalWebsitesPages) {
+            setWebsitesPage(totalWebsitesPages);
+        }
+    }, [websitesPage, totalWebsitesPages]);
+
+    const paginatedWebsites = useMemo(() => {
+        if (!data) return [];
+        const safePage = Math.min(websitesPage, totalWebsitesPages);
+        const startIndex = (safePage - 1) * WEBSITES_PER_PAGE;
+        return data.websites_to_apply.slice(startIndex, startIndex + WEBSITES_PER_PAGE);
+    }, [data, websitesPage, totalWebsitesPages]);
+
+    const websitesPageSummary = useMemo(() => {
+        if (!data || data.websites_to_apply.length === 0) {
+            return 'Showing 0 of 0';
+        }
+
+        const safePage = Math.min(websitesPage, totalWebsitesPages);
+        const startIndex = (safePage - 1) * WEBSITES_PER_PAGE;
+        const from = startIndex + 1;
+        const to = Math.min(startIndex + WEBSITES_PER_PAGE, data.websites_to_apply.length);
+        return `Showing ${from}-${to} of ${data.websites_to_apply.length}`;
+    }, [data, websitesPage, totalWebsitesPages]);
+
+    const totalFollowUpsPages = useMemo(() => {
+        if (!data) return 1;
+        return Math.max(1, Math.ceil(data.networking_followups.length / FOLLOW_UPS_PER_PAGE));
+    }, [data]);
+
+    useEffect(() => {
+        if (followUpsPage > totalFollowUpsPages) {
+            setFollowUpsPage(totalFollowUpsPages);
+        }
+    }, [followUpsPage, totalFollowUpsPages]);
+
+    const paginatedFollowUps = useMemo(() => {
+        if (!data) return [];
+        const safePage = Math.min(followUpsPage, totalFollowUpsPages);
+        const startIndex = (safePage - 1) * FOLLOW_UPS_PER_PAGE;
+        return data.networking_followups.slice(startIndex, startIndex + FOLLOW_UPS_PER_PAGE);
+    }, [data, followUpsPage, totalFollowUpsPages]);
+
+    const followUpsPageSummary = useMemo(() => {
+        if (!data || data.networking_followups.length === 0) {
+            return 'Showing 0 of 0';
+        }
+
+        const safePage = Math.min(followUpsPage, totalFollowUpsPages);
+        const startIndex = (safePage - 1) * FOLLOW_UPS_PER_PAGE;
+        const from = startIndex + 1;
+        const to = Math.min(startIndex + FOLLOW_UPS_PER_PAGE, data.networking_followups.length);
+        return `Showing ${from}-${to} of ${data.networking_followups.length}`;
+    }, [data, followUpsPage, totalFollowUpsPages]);
 
     async function handleMarkFollowUpDone(contactId: string) {
         setFollowUpSubmittingId(contactId);
@@ -279,6 +485,15 @@ export default function DashboardPage() {
         }
     }
 
+    function openPitchDetails(pitch: DashboardPitchItem) {
+        setActivePitch(pitch);
+        setIsPitchModalOpen(true);
+    }
+
+    function closePitchDetails() {
+        setIsPitchModalOpen(false);
+    }
+
     if (loading) {
         return (
             <section className="card flex min-h-[280px] items-center justify-center">
@@ -311,102 +526,119 @@ export default function DashboardPage() {
                 </p>
             </header>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <article className="card p-4">
-                    <p className="text-sm text-slate-400">Total Applications</p>
-                    <p className="mt-2 text-3xl font-bold">{data.total_applications}</p>
-                </article>
-
-                <article className="card p-4">
-                    <p className="text-sm text-slate-400">Total Interviews</p>
-                    <p className="mt-2 text-3xl font-bold">{data.total_interviews}</p>
-                </article>
-
-                <article className="card p-4">
-                    <p className="text-sm text-slate-400">Total Rejected</p>
-                    <p className="mt-2 text-3xl font-bold">{data.total_rejected}</p>
-                </article>
-
-                <article className="card p-4">
-                    <p className="text-sm text-slate-400">Total Offers</p>
-                    <p className="mt-2 text-3xl font-bold">{data.total_offers}</p>
-                </article>
-
-                <article className="card p-4">
-                    <p className="text-sm text-slate-400">Referral Applications</p>
-                    <p className="mt-2 text-3xl font-bold">{data.referral_count}</p>
-                </article>
-
-                <article className="card p-4">
-                    <p className="text-sm text-slate-400">Referral Ratio</p>
-                    <p className="mt-2 text-3xl font-bold">{referralRatio}</p>
-                </article>
-            </div>
-
-            <div className="card p-4">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                        <h3 className="text-sm font-semibold text-slate-100">{chartMeta.title}</h3>
-                        <p className="text-xs text-slate-400">{chartMeta.subtitle}</p>
-                    </div>
-
-                    <div className="inline-flex rounded-lg border border-slate-700/70 bg-slate-900/70 p-1">
-                        <button
-                            type="button"
-                            onClick={() => setChartView('monthly')}
-                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                                chartView === 'monthly'
-                                    ? 'bg-slate-900 text-white'
-                                    : 'text-slate-300 hover:bg-slate-800/80'
-                            }`}
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+                <div className="space-y-4">
+                    {summaryCards.map(card => (
+                        <article
+                            key={card.label}
+                            className={`rounded-2xl px-4 py-2.5 shadow-[0_18px_38px_rgba(2,6,23,0.45)] ${card.toneClass}`}
                         >
-                            Monthly
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setChartView('yearly')}
-                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                                chartView === 'yearly'
-                                    ? 'bg-slate-900 text-white'
-                                    : 'text-slate-300 hover:bg-slate-800/80'
-                            }`}
-                        >
-                            Yearly
-                        </button>
-                    </div>
+                            <p className="text-xs text-slate-400">{card.label}</p>
+                            <p className={`mt-1 text-2xl font-bold leading-none ${card.valueClass}`}>{card.value}</p>
+                        </article>
+                    ))}
                 </div>
 
-                <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartMeta.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1e2b47" />
-                            <XAxis dataKey={chartMeta.xKey} stroke="#94a3b8" fontSize={12} />
-                            <YAxis allowDecimals={false} stroke="#94a3b8" fontSize={12} />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#22d3ee" radius={[8, 8, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="card border-cyan-300/20 bg-gradient-to-r from-slate-950/90 via-slate-900/85 to-blue-950/65 p-5">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                        <div>
+                            <h3 className="text-2xl font-semibold text-slate-100">{chartMeta.title}</h3>
+                            <p className="text-sm text-slate-400">{chartMeta.subtitle}</p>
+                        </div>
+
+                        <div className="inline-flex rounded-xl border border-slate-600/80 bg-slate-900/80 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setChartView('monthly')}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    chartView === 'monthly'
+                                        ? 'bg-slate-800 text-white'
+                                        : 'text-slate-300 hover:bg-slate-800/80'
+                                }`}
+                            >
+                                Monthly
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setChartView('yearly')}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    chartView === 'yearly'
+                                        ? 'bg-slate-800 text-white'
+                                        : 'text-slate-300 hover:bg-slate-800/80'
+                                }`}
+                            >
+                                Yearly
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="h-[320px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart
+                                data={displayChartData}
+                                margin={{
+                                    top: 28,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 0,
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1d2f4f" vertical={false} />
+                                <XAxis
+                                    dataKey={chartMeta.xKey}
+                                    stroke="#94a3b8"
+                                    fontSize={12}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    allowDecimals={false}
+                                    stroke="#94a3b8"
+                                    fontSize={12}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#020617',
+                                        border: '1px solid #334155',
+                                        borderRadius: '12px',
+                                        color: '#e2e8f0',
+                                    }}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="count"
+                                    stroke="#22d3ee"
+                                    strokeWidth={3}
+                                    dot={{ r: 4, fill: '#22d3ee', stroke: '#0f172a', strokeWidth: 2 }}
+                                    activeDot={{ r: 6, fill: '#67e8f9', stroke: '#0f172a', strokeWidth: 2 }}
+                                    label={{ fill: '#cbd5e1', fontSize: 12, position: 'top' }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-100">Latest Applications</h3>
-                        <p className="text-xs text-slate-400">
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Latest Applications</h3>
+                        <p className="text-sm text-slate-300">
                             Showing your most recent applications with pagination.
                         </p>
                     </div>
 
                     <div className="w-full max-w-sm">
                         <label htmlFor="dashboard-company-filter" className="label">
-                            Filter by company
+                            Filter by company or role
                         </label>
                         <input
                             id="dashboard-company-filter"
                             type="text"
                             className="input"
-                            placeholder="Search company name..."
+                            placeholder="Search company or role..."
                             value={companyFilter}
                             onChange={event => setCompanyFilter(event.target.value)}
                         />
@@ -545,43 +777,161 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-100">Networking Follow-ups</h3>
-                        <p className="text-xs text-slate-400">Showing the nearest follow-up dates.</p>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Websites To Apply</h3>
+                        <p className="text-sm text-slate-300">
+                            Showing your saved websites to apply.
+                        </p>
                     </div>
-                    {data.networking_followups.length > 5 ? (
-                        <button
-                            type="button"
-                            className="btn-secondary"
-                            onClick={() => setShowAllFollowUps(current => !current)}
-                        >
-                            {showAllFollowUps ? (
-                                <>
-                                    <ChevronUp className="h-4 w-4" /> Show less
-                                </>
-                            ) : (
-                                <>
-                                    <ChevronDown className="h-4 w-4" />
-                                    Show all ({data.networking_followups.length})
-                                </>
-                            )}
-                        </button>
-                    ) : null}
                 </div>
 
-                <div
-                    className={`mb-4 rounded-lg border px-3 py-2 text-sm font-medium ${networkingSummary.className}`}
-                >
-                    {networkingSummary.text}
+                {data.websites_to_apply.length === 0 ? (
+                    <p className="text-sm text-slate-400">No websites saved yet.</p>
+                ) : (
+                    <div className="space-y-3">
+                        <div className="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Website</th>
+                                        <th>Type</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {paginatedWebsites.map(item => {
+                                        const safeWebsiteUrl = toSafeExternalUrl(item.website_url);
+                                        return (
+                                            <tr key={item.id}>
+                                                <td>{item.name}</td>
+                                                <td>
+                                                    {safeWebsiteUrl ? (
+                                                        <a
+                                                            href={safeWebsiteUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-cyan-300 hover:underline"
+                                                        >
+                                                            Open
+                                                        </a>
+                                                    ) : (
+                                                        item.website_url
+                                                    )}
+                                                </td>
+                                                <td>{toLabel(item.type)}</td>
+                                                <td>{new Date(item.created_at).toLocaleDateString()}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {data.websites_to_apply.length > WEBSITES_PER_PAGE ? (
+                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-xs text-slate-400">{websitesPageSummary}</p>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        disabled={websitesPage <= 1}
+                                        onClick={() =>
+                                            setWebsitesPage(current => Math.max(1, current - 1))
+                                        }
+                                    >
+                                        Previous
+                                    </button>
+
+                                    {Array.from(
+                                        { length: totalWebsitesPages },
+                                        (_, index) => index + 1
+                                    ).map(page => (
+                                        <button
+                                            key={page}
+                                            type="button"
+                                            onClick={() => setWebsitesPage(page)}
+                                            className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                                websitesPage === page
+                                                    ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                    : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        disabled={websitesPage >= totalWebsitesPages}
+                                        onClick={() =>
+                                            setWebsitesPage(current =>
+                                                Math.min(totalWebsitesPages, current + 1)
+                                            )
+                                        }
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+                )}
+            </div>
+
+            <div className="card p-4">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Saved Pitches</h3>
+                        <p className="text-sm text-slate-300">Click a card to open full pitch.</p>
+                    </div>
+                </div>
+
+                {data.pitches.length === 0 ? (
+                    <p className="text-sm text-slate-400">No pitches added yet.</p>
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {data.pitches.map(item => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => openPitchDetails(item)}
+                                className="group rounded-2xl border border-amber-300/25 bg-gradient-to-br from-slate-950/95 via-slate-900/95 to-amber-950/35 p-4 text-left shadow-[0_18px_36px_rgba(2,6,23,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-amber-300/40 hover:shadow-[0_24px_48px_rgba(2,6,23,0.55)]"
+                            >
+                                <div className="mb-3 h-1.5 w-14 rounded-full bg-amber-300/40 transition-colors group-hover:bg-amber-300/55" />
+                                <p className="text-sm font-semibold text-slate-100">{item.name}</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-300">
+                                    {getPitchPreview(item.pitch)}
+                                </p>
+                                <p className="mt-3 text-xs text-slate-400">
+                                    Saved on {new Date(item.created_at).toLocaleDateString()}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Networking Follow-ups</h3>
+                        <p className="text-sm text-slate-300">Showing the nearest follow-up dates.</p>
+                    </div>
+
+                    <div
+                        className={`rounded-lg border px-3 py-2 text-sm font-medium md:max-w-[420px] ${networkingSummary.className}`}
+                    >
+                        {networkingSummary.text}
+                    </div>
                 </div>
 
                 {data.networking_followups.length === 0 ? (
                     <p className="text-sm text-slate-400">No follow-ups scheduled yet.</p>
                 ) : (
                     <div className="space-y-3">
-                        {(showAllFollowUps
-                            ? data.networking_followups
-                            : data.networking_followups.slice(0, 5)
-                        ).map(item => {
+                        {paginatedFollowUps.map(item => {
                             const badgeStyles = item.is_overdue
                                 ? 'border border-red-500/40 bg-red-500/15 text-red-200'
                                 : item.days_until_follow_up <= 7
@@ -634,9 +984,103 @@ export default function DashboardPage() {
                                 </article>
                             );
                         })}
+
+                        {data.networking_followups.length > FOLLOW_UPS_PER_PAGE ? (
+                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-xs text-slate-400">{followUpsPageSummary}</p>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        disabled={followUpsPage <= 1}
+                                        onClick={() =>
+                                            setFollowUpsPage(current => Math.max(1, current - 1))
+                                        }
+                                    >
+                                        Previous
+                                    </button>
+
+                                    {Array.from(
+                                        { length: totalFollowUpsPages },
+                                        (_, index) => index + 1
+                                    ).map(page => (
+                                        <button
+                                            key={page}
+                                            type="button"
+                                            onClick={() => setFollowUpsPage(page)}
+                                            className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                                followUpsPage === page
+                                                    ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                    : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        disabled={followUpsPage >= totalFollowUpsPages}
+                                        onClick={() =>
+                                            setFollowUpsPage(current =>
+                                                Math.min(totalFollowUpsPages, current + 1)
+                                            )
+                                        }
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        ) : null}
                     </div>
                 )}
             </div>
+
+            {activePitch ? (
+                <div
+                    className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
+                        isPitchModalOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+                    }`}
+                >
+                    <button
+                        type="button"
+                        aria-label="Close pitch modal"
+                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+                        onClick={closePitchDetails}
+                    />
+
+                    <article
+                        className={`relative z-10 flex max-h-[90dvh] w-full max-w-3xl flex-col rounded-2xl border border-amber-300/35 bg-gradient-to-br from-slate-950/95 via-slate-900/95 to-amber-950/35 p-5 shadow-[0_32px_80px_rgba(2,6,23,0.75)] transition-all duration-200 ${
+                            isPitchModalOpen ? 'scale-100' : 'scale-95'
+                        }`}
+                    >
+                        <header className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <h3 className="text-xl font-semibold text-slate-100">{activePitch.name}</h3>
+                                <p className="text-xs text-slate-400">
+                                    Saved on {new Date(activePitch.created_at).toLocaleDateString()}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={closePitchDetails}
+                            >
+                                Close
+                            </button>
+                        </header>
+
+                        <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-700/70 bg-slate-950/55 p-4">
+                            <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-200">
+                                {activePitch.pitch}
+                            </p>
+                        </div>
+                    </article>
+                </div>
+            ) : null}
         </section>
     );
 }

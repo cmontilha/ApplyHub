@@ -10,6 +10,7 @@ export type WorkMode = 'onsite' | 'hybrid' | 'remote';
 export type ApplicationStatus = 'applied' | 'in_progress' | 'interview' | 'rejected' | 'offer';
 export type ApplicationCategory = 'referral' | 'no_referral' | 'recruiter_contact';
 export type CertDifficulty = 'easy' | 'medium' | 'hard';
+export type WebsiteApplicationType = 'both' | 'nacional' | 'internacional';
 
 export interface Application {
     id: string;
@@ -66,6 +67,23 @@ export interface NetworkingContact {
     created_at: string;
 }
 
+export interface WebsiteToApply {
+    id: string;
+    user_id: string;
+    name: string;
+    website_url: string;
+    type: WebsiteApplicationType;
+    created_at: string;
+}
+
+export interface Pitch {
+    id: string;
+    user_id: string;
+    name: string;
+    pitch: string;
+    created_at: string;
+}
+
 export interface Database {
     public: {
         Tables: {
@@ -89,12 +107,23 @@ export interface Database {
                 Insert: Omit<NetworkingContact, 'id' | 'created_at'>;
                 Update: Partial<Omit<NetworkingContact, 'id' | 'user_id' | 'created_at'>>;
             };
+            websites_to_apply: {
+                Row: WebsiteToApply;
+                Insert: Omit<WebsiteToApply, 'id' | 'created_at'>;
+                Update: Partial<Omit<WebsiteToApply, 'id' | 'user_id' | 'created_at'>>;
+            };
+            pitches: {
+                Row: Pitch;
+                Insert: Omit<Pitch, 'id' | 'created_at'>;
+                Update: Partial<Omit<Pitch, 'id' | 'user_id' | 'created_at'>>;
+            };
         };
         Enums: {
             work_mode: WorkMode;
             application_status: ApplicationStatus;
             application_category: ApplicationCategory;
             cert_difficulty: CertDifficulty;
+            website_application_type: WebsiteApplicationType;
         };
     };
 }

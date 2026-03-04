@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = '/auth/confirm';
         if (!url.searchParams.get('next')) {
-            url.searchParams.set('next', '/app/applications');
+            url.searchParams.set('next', '/app/dashboard');
         }
         return NextResponse.redirect(url);
     }
@@ -54,14 +54,14 @@ export async function middleware(request: NextRequest) {
     // Redirect authenticated users away from auth pages
     if (user && (pathname === '/login' || pathname === '/signup')) {
         const url = request.nextUrl.clone();
-        url.pathname = '/app/applications';
+        url.pathname = '/app/dashboard';
         return NextResponse.redirect(url);
     }
 
-    // Redirect root to applications if logged in, else to login
+    // Redirect root to dashboard if logged in, else to login
     if (pathname === '/') {
         const url = request.nextUrl.clone();
-        url.pathname = user ? '/app/applications' : '/login';
+        url.pathname = user ? '/app/dashboard' : '/login';
         return NextResponse.redirect(url);
     }
 
