@@ -118,11 +118,15 @@ export function AuthAnimatedHero() {
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/35 to-slate-950/55" />
             <div
                 aria-hidden
-                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] bg-[radial-gradient(circle,rgba(45,212,191,0.38)_1px,transparent_1px),radial-gradient(circle,rgba(56,189,248,0.30)_1px,transparent_1px)] [background-size:18px_18px,26px_26px] [background-position:0_0,10px_12px] opacity-30"
+                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] bg-[radial-gradient(ellipse_at_74%_46%,rgba(34,211,238,0.08),transparent_72%)]"
             />
             <div
                 aria-hidden
-                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] bg-[radial-gradient(ellipse_at_72%_46%,rgba(34,211,238,0.22),transparent_62%)]"
+                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] [mask-image:linear-gradient(to_left,black_0%,black_74%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_left,black_0%,black_74%,transparent_100%)] bg-[linear-gradient(rgba(56,189,248,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(45,212,191,0.07)_1px,transparent_1px)] [background-size:22px_22px] opacity-18"
+            />
+            <div
+                aria-hidden
+                className="pointer-events-none absolute right-0 top-0 h-full w-[54vw] [mask-image:linear-gradient(to_left,black_0%,black_68%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_left,black_0%,black_68%,transparent_100%)] bg-[linear-gradient(rgba(34,211,238,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.04)_1px,transparent_1px)] [background-size:44px_44px] [background-position:11px_11px] opacity-14"
             />
             <div
                 aria-hidden

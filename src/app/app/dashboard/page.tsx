@@ -345,6 +345,31 @@ export default function DashboardPage() {
         };
     }, [data]);
 
+    const watchListApplications = useMemo(() => {
+        if (!data) return [];
+
+        return data.applications_list.filter(
+            item => item.status === 'in_progress' || item.status === 'interview'
+        );
+    }, [data]);
+
+    const watchListMetrics = useMemo(() => {
+        let inProgress = 0;
+        let interview = 0;
+
+        for (const item of watchListApplications) {
+            if (item.status === 'in_progress') {
+                inProgress += 1;
+                continue;
+            }
+            if (item.status === 'interview') {
+                interview += 1;
+            }
+        }
+
+        return { inProgress, interview };
+    }, [watchListApplications]);
+
     const filteredApplications = useMemo(() => {
         if (!data) return [];
         const normalizedFilter = companyFilter.trim().toLowerCase();
@@ -619,6 +644,90 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                     </div>
                 </div>
+            </div>
+
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">
+                            Watch List Applications
+                        </h3>
+                        <p className="text-sm text-slate-300">
+                            Track applications with status In Progress or Interview.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="badge border border-cyan-500/40 bg-cyan-500/15 text-cyan-200">
+                            In Progress: {watchListMetrics.inProgress}
+                        </span>
+                        <span className="badge border border-amber-500/40 bg-amber-500/15 text-amber-200">
+                            Interview: {watchListMetrics.interview}
+                        </span>
+                    </div>
+                </div>
+
+                {watchListApplications.length === 0 ? (
+                    <p className="text-sm text-slate-400">
+                        No applications in In Progress or Interview yet.
+                    </p>
+                ) : (
+                    <div className="table-wrapper">
+                        <table className="min-w-[1200px]">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Company</th>
+                                    <th>Role</th>
+                                    <th>Work Mode</th>
+                                    <th>Location</th>
+                                    <th>Job URL</th>
+                                    <th>Status</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {watchListApplications.map(application => {
+                                    const safeJobUrl = toSafeExternalUrl(application.job_url);
+                                    const statusClass =
+                                        application.status === 'interview'
+                                            ? 'border border-amber-500/40 bg-amber-500/15 text-amber-200'
+                                            : 'border border-cyan-500/40 bg-cyan-500/15 text-cyan-200';
+
+                                    return (
+                                        <tr key={`watch-${application.id}`}>
+                                            <td>{application.applied_date}</td>
+                                            <td>{application.company}</td>
+                                            <td>{application.role_title}</td>
+                                            <td>{toLabel(application.work_mode)}</td>
+                                            <td>{application.location || '-'}</td>
+                                            <td>
+                                                {safeJobUrl ? (
+                                                    <a
+                                                        href={safeJobUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-cyan-300 hover:underline"
+                                                    >
+                                                        Open
+                                                    </a>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className={`badge ${statusClass}`}>
+                                                    {toLabel(application.status)}
+                                                </span>
+                                            </td>
+                                            <td>{toLabel(application.category)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             <div className="card p-4">

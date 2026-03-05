@@ -1,7 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
-import { Loader2, Trash2 } from 'lucide-react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { Edit3, Loader2, Save, Trash2, X } from 'lucide-react';
 import {
     APPLICATION_CATEGORY_OPTIONS,
     APPLICATION_STATUS_OPTIONS,
@@ -45,6 +45,21 @@ function getInitialFormState(): ApplicationFormValues {
         category: 'no_referral',
         recruiter_contact_notes: '',
         notes: '',
+    };
+}
+
+function toFormValues(application: Application): ApplicationFormValues {
+    return {
+        applied_date: application.applied_date,
+        company: application.company,
+        role_title: application.role_title,
+        work_mode: application.work_mode,
+        location: application.location ?? '',
+        job_url: application.job_url ?? '',
+        status: application.status,
+        category: application.category,
+        recruiter_contact_notes: application.recruiter_contact_notes ?? '',
+        notes: application.notes ?? '',
     };
 }
 
@@ -94,6 +109,9 @@ export default function ApplicationsPage() {
     const [submitting, setSubmitting] = useState(false);
     const [savingRowId, setSavingRowId] = useState<string | null>(null);
     const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingValues, setEditingValues] = useState<ApplicationFormValues>(getInitialFormState);
+    const [companyFilter, setCompanyFilter] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const appliedDateInputRef = useRef<HTMLInputElement | null>(null);
@@ -177,6 +195,44 @@ export default function ApplicationsPage() {
         }
     }
 
+    function startEdit(application: Application) {
+        setEditingId(application.id);
+        setEditingValues(toFormValues(application));
+    }
+
+    function cancelEdit() {
+        setEditingId(null);
+        setEditingValues(getInitialFormState());
+    }
+
+    async function saveEdit(applicationId: string) {
+        setSavingRowId(applicationId);
+        setError(null);
+        setSuccessMessage(null);
+
+        try {
+            const updated = await parseResponse<Application>(
+                await fetch(`/api/applications/${applicationId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editingValues),
+                })
+            );
+
+            setApplications(current =>
+                sortApplications(
+                    current.map(item => (item.id === applicationId ? updated : item))
+                )
+            );
+            cancelEdit();
+            setSuccessMessage('Application updated.');
+        } catch (updateError) {
+            setError(getErrorMessage(updateError));
+        } finally {
+            setSavingRowId(null);
+        }
+    }
+
     async function handleDeleteApplication(applicationId: string) {
         const confirmed = window.confirm('Delete this application?');
         if (!confirmed) return;
@@ -196,6 +252,9 @@ export default function ApplicationsPage() {
             }
 
             setApplications(current => current.filter(item => item.id !== applicationId));
+            if (editingId === applicationId) {
+                cancelEdit();
+            }
             setSuccessMessage('Application removed.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
@@ -203,6 +262,17 @@ export default function ApplicationsPage() {
             setDeletingRowId(null);
         }
     }
+
+    const filteredApplications = useMemo(() => {
+        const normalizedFilter = companyFilter.trim().toLowerCase();
+        if (!normalizedFilter) return applications;
+
+        return applications.filter(
+            item =>
+                item.company.toLowerCase().includes(normalizedFilter) ||
+                item.role_title.toLowerCase().includes(normalizedFilter)
+        );
+    }, [applications, companyFilter]);
 
     return (
         <section className="space-y-6">
@@ -444,8 +514,30 @@ export default function ApplicationsPage() {
                 </div>
             ) : null}
 
-            <div className="table-wrapper">
-                <table>
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Applications List</h3>
+                        <p className="text-sm text-slate-300">Filter by company or role.</p>
+                    </div>
+
+                    <div className="w-full max-w-sm">
+                        <label htmlFor="applications-company-filter" className="label">
+                            Search company or role
+                        </label>
+                        <input
+                            id="applications-company-filter"
+                            type="text"
+                            className="input"
+                            placeholder="Search company or role..."
+                            value={companyFilter}
+                            onChange={event => setCompanyFilter(event.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="table-wrapper">
+                    <table>
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -476,91 +568,311 @@ export default function ApplicationsPage() {
                                     No applications yet.
                                 </td>
                             </tr>
+                        ) : filteredApplications.length === 0 ? (
+                            <tr>
+                                <td colSpan={11} className="py-12 text-center text-slate-400">
+                                    No applications found for this filter.
+                                </td>
+                            </tr>
                         ) : (
-                            applications.map(application => {
+                            filteredApplications.map(application => {
                                 const rowBusy =
                                     savingRowId === application.id || deletingRowId === application.id;
+                                const isEditing = editingId === application.id;
 
                                 return (
                                     <tr key={application.id}>
-                                        <td>{application.applied_date}</td>
-                                        <td>{application.company}</td>
-                                        <td>{application.role_title}</td>
-                                        <td>{toLabel(application.work_mode)}</td>
-                                        <td>{application.location || '-'}</td>
                                         <td>
-                                            {(() => {
-                                                const safeJobUrl = toSafeExternalUrl(application.job_url);
-                                                return safeJobUrl ? (
-                                                    <a
-                                                        href={safeJobUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-cyan-300 hover:underline"
-                                                    >
-                                                        Open
-                                                    </a>
-                                                ) : (
-                                                    '-'
-                                                );
-                                            })()}
+                                            {isEditing ? (
+                                                <input
+                                                    type="date"
+                                                    className="input min-w-[150px]"
+                                                    value={editingValues.applied_date}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            applied_date: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                application.applied_date
+                                            )}
                                         </td>
                                         <td>
-                                            <select
-                                                className="input min-w-[150px]"
-                                                value={application.status}
-                                                disabled={rowBusy}
-                                                onChange={event =>
-                                                    handleInlineUpdate(application.id, {
-                                                        status: event.target.value as ApplicationStatus,
-                                                    })
-                                                }
-                                            >
-                                                {APPLICATION_STATUS_OPTIONS.map(option => (
-                                                    <option key={option} value={option}>
-                                                        {toLabel(option)}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    className="input min-w-[180px]"
+                                                    value={editingValues.company}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            company: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                application.company
+                                            )}
                                         </td>
                                         <td>
-                                            <select
-                                                className="input min-w-[180px]"
-                                                value={application.category}
-                                                disabled={rowBusy}
-                                                onChange={event =>
-                                                    handleInlineUpdate(application.id, {
-                                                        category: event.target.value as ApplicationCategory,
-                                                    })
-                                                }
-                                            >
-                                                {APPLICATION_CATEGORY_OPTIONS.map(option => (
-                                                    <option key={option} value={option}>
-                                                        {toLabel(option)}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    className="input min-w-[220px]"
+                                                    value={editingValues.role_title}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            role_title: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                application.role_title
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <select
+                                                    className="input min-w-[160px]"
+                                                    value={editingValues.work_mode}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            work_mode: event.target.value as WorkMode,
+                                                        }))
+                                                    }
+                                                >
+                                                    {WORK_MODE_OPTIONS.map(option => (
+                                                        <option key={option} value={option}>
+                                                            {toLabel(option)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                toLabel(application.work_mode)
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    className="input min-w-[170px]"
+                                                    value={editingValues.location}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            location: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                application.location || '-'
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <input
+                                                    type="url"
+                                                    className="input min-w-[220px]"
+                                                    value={editingValues.job_url}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            job_url: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                (() => {
+                                                    const safeJobUrl = toSafeExternalUrl(application.job_url);
+                                                    return safeJobUrl ? (
+                                                        <a
+                                                            href={safeJobUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-cyan-300 hover:underline"
+                                                        >
+                                                            Open
+                                                        </a>
+                                                    ) : (
+                                                        '-'
+                                                    );
+                                                })()
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <select
+                                                    className="input min-w-[150px]"
+                                                    value={editingValues.status}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            status: event.target.value as ApplicationStatus,
+                                                        }))
+                                                    }
+                                                >
+                                                    {APPLICATION_STATUS_OPTIONS.map(option => (
+                                                        <option key={option} value={option}>
+                                                            {toLabel(option)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <select
+                                                    className="input min-w-[150px]"
+                                                    value={application.status}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        handleInlineUpdate(application.id, {
+                                                            status: event.target.value as ApplicationStatus,
+                                                        })
+                                                    }
+                                                >
+                                                    {APPLICATION_STATUS_OPTIONS.map(option => (
+                                                        <option key={option} value={option}>
+                                                            {toLabel(option)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <select
+                                                    className="input min-w-[180px]"
+                                                    value={editingValues.category}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            category: event.target.value as ApplicationCategory,
+                                                        }))
+                                                    }
+                                                >
+                                                    {APPLICATION_CATEGORY_OPTIONS.map(option => (
+                                                        <option key={option} value={option}>
+                                                            {toLabel(option)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <select
+                                                    className="input min-w-[180px]"
+                                                    value={application.category}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        handleInlineUpdate(application.id, {
+                                                            category: event.target.value as ApplicationCategory,
+                                                        })
+                                                    }
+                                                >
+                                                    {APPLICATION_CATEGORY_OPTIONS.map(option => (
+                                                        <option key={option} value={option}>
+                                                            {toLabel(option)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
                                         </td>
                                         <td className="min-w-[280px] max-w-[380px] whitespace-normal break-words align-top text-slate-300">
-                                            {application.recruiter_contact_notes || '-'}
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    className="input min-w-[280px]"
+                                                    value={editingValues.recruiter_contact_notes}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            recruiter_contact_notes: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                application.recruiter_contact_notes || '-'
+                                            )}
                                         </td>
                                         <td className="min-w-[340px] max-w-[480px] whitespace-normal break-words align-top text-slate-300">
-                                            {application.notes || '-'}
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    className="input min-w-[340px]"
+                                                    value={editingValues.notes}
+                                                    disabled={rowBusy}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            notes: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                application.notes || '-'
+                                            )}
                                         </td>
                                         <td>
-                                            <button
-                                                type="button"
-                                                className="btn-danger"
-                                                disabled={rowBusy}
-                                                onClick={() => handleDeleteApplication(application.id)}
-                                            >
-                                                {deletingRowId === application.id ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                            <div className="flex items-center gap-2">
+                                                {isEditing ? (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-primary"
+                                                            disabled={rowBusy}
+                                                            onClick={() => saveEdit(application.id)}
+                                                        >
+                                                            {savingRowId === application.id ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <Save className="h-4 w-4" />
+                                                            )}
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-secondary"
+                                                            disabled={rowBusy}
+                                                            onClick={cancelEdit}
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                            Cancel
+                                                        </button>
+                                                    </>
                                                 ) : (
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <button
+                                                        type="button"
+                                                        className="btn-secondary"
+                                                        disabled={rowBusy}
+                                                        onClick={() => startEdit(application)}
+                                                    >
+                                                        <Edit3 className="h-4 w-4" />
+                                                        Edit
+                                                    </button>
                                                 )}
-                                                Delete
-                                            </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn-danger"
+                                                    disabled={rowBusy}
+                                                    onClick={() => handleDeleteApplication(application.id)}
+                                                >
+                                                    {deletingRowId === application.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -568,6 +880,7 @@ export default function ApplicationsPage() {
                         )}
                     </tbody>
                 </table>
+                </div>
             </div>
         </section>
     );
