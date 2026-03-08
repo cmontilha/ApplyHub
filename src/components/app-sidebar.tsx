@@ -10,6 +10,7 @@ import {
     Building2,
     ChevronLeft,
     ChevronRight,
+    FolderOpen,
     FileText,
     Globe2,
     GraduationCap,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
     { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
     { href: '/app/pitch', label: 'Pitch', icon: MessageSquare },
     { href: '/app/websites-to-apply', label: 'Websites To Apply', icon: Globe2 },
+    { href: '/app/resumes', label: 'Resumes', icon: FolderOpen },
     { href: '/app/tips-for-resume', label: 'Tips for Resume', icon: FileText },
 ];
 

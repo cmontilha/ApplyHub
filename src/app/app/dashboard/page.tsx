@@ -10,7 +10,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { CheckCircle2, Edit3, Loader2, Save, Trash2, X } from 'lucide-react';
 import { toLabel } from '@/lib/constants';
 import type { ApplicationCategory, ApplicationStatus, WorkMode } from '@/types/database';
 
@@ -34,6 +34,22 @@ type DashboardWebsiteItem = {
     website_url: string;
     type: 'both' | 'nacional' | 'internacional';
     created_at: string;
+};
+
+type DashboardCompanyItem = {
+    id: string;
+    name: string;
+    website_url: string | null;
+    contacts: string | null;
+    notes: string | null;
+    created_at: string;
+};
+
+type DashboardCompanyFormValues = {
+    name: string;
+    website_url: string;
+    contacts: string;
+    notes: string;
 };
 
 type DashboardPitchItem = {
@@ -61,6 +77,7 @@ type DashboardData = {
     }>;
     applications_list: DashboardApplicationItem[];
     websites_to_apply: DashboardWebsiteItem[];
+    companies: DashboardCompanyItem[];
     pitches: DashboardPitchItem[];
     networking_followups: DashboardFollowUpItem[];
 };
@@ -83,7 +100,17 @@ type DashboardApplicationItem = {
 
 const APPLICATIONS_PER_PAGE = 10;
 const WEBSITES_PER_PAGE = 5;
+const COMPANIES_PER_PAGE = 3;
 const FOLLOW_UPS_PER_PAGE = 5;
+
+function getInitialCompanyFormState(): DashboardCompanyFormValues {
+    return {
+        name: '',
+        website_url: '',
+        contacts: '',
+        notes: '',
+    };
+}
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -133,12 +160,20 @@ export default function DashboardPage() {
     const [followUpSubmittingId, setFollowUpSubmittingId] = useState<string | null>(null);
     const [chartView, setChartView] = useState<ChartView>('monthly');
     const [companyFilter, setCompanyFilter] = useState('');
+    const [companiesFilter, setCompaniesFilter] = useState('');
     const [applicationsPage, setApplicationsPage] = useState(1);
     const [websitesPage, setWebsitesPage] = useState(1);
+    const [companiesPage, setCompaniesPage] = useState(1);
     const [followUpsPage, setFollowUpsPage] = useState(1);
     const [activePitch, setActivePitch] = useState<DashboardPitchItem | null>(null);
     const [isPitchModalOpen, setIsPitchModalOpen] = useState(false);
     const [deletingApplicationId, setDeletingApplicationId] = useState<string | null>(null);
+    const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+    const [editingCompanyValues, setEditingCompanyValues] = useState<DashboardCompanyFormValues>(
+        getInitialCompanyFormState
+    );
+    const [savingCompanyId, setSavingCompanyId] = useState<string | null>(null);
+    const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(null);
 
     async function loadDashboard() {
         setLoading(true);
@@ -169,6 +204,10 @@ export default function DashboardPage() {
     useEffect(() => {
         setWebsitesPage(1);
     }, [data?.websites_to_apply.length]);
+
+    useEffect(() => {
+        setCompaniesPage(1);
+    }, [companiesFilter, data?.companies.length]);
 
     useEffect(() => {
         if (!activePitch) return;
@@ -438,6 +477,43 @@ export default function DashboardPage() {
         return `Showing ${from}-${to} of ${data.websites_to_apply.length}`;
     }, [data, websitesPage, totalWebsitesPages]);
 
+    const filteredCompanies = useMemo(() => {
+        if (!data) return [];
+
+        const normalizedFilter = companiesFilter.trim().toLowerCase();
+        if (!normalizedFilter) return data.companies;
+
+        return data.companies.filter(item => item.name.toLowerCase().includes(normalizedFilter));
+    }, [companiesFilter, data]);
+
+    const totalCompaniesPages = useMemo(() => {
+        return Math.max(1, Math.ceil(filteredCompanies.length / COMPANIES_PER_PAGE));
+    }, [filteredCompanies.length]);
+
+    useEffect(() => {
+        if (companiesPage > totalCompaniesPages) {
+            setCompaniesPage(totalCompaniesPages);
+        }
+    }, [companiesPage, totalCompaniesPages]);
+
+    const paginatedCompanies = useMemo(() => {
+        const safePage = Math.min(companiesPage, totalCompaniesPages);
+        const startIndex = (safePage - 1) * COMPANIES_PER_PAGE;
+        return filteredCompanies.slice(startIndex, startIndex + COMPANIES_PER_PAGE);
+    }, [companiesPage, filteredCompanies, totalCompaniesPages]);
+
+    const companiesPageSummary = useMemo(() => {
+        if (filteredCompanies.length === 0) {
+            return 'Showing 0 of 0';
+        }
+
+        const safePage = Math.min(companiesPage, totalCompaniesPages);
+        const startIndex = (safePage - 1) * COMPANIES_PER_PAGE;
+        const from = startIndex + 1;
+        const to = Math.min(startIndex + COMPANIES_PER_PAGE, filteredCompanies.length);
+        return `Showing ${from}-${to} of ${filteredCompanies.length}`;
+    }, [companiesPage, filteredCompanies.length, totalCompaniesPages]);
+
     const totalFollowUpsPages = useMemo(() => {
         if (!data) return 1;
         return Math.max(1, Math.ceil(data.networking_followups.length / FOLLOW_UPS_PER_PAGE));
@@ -507,6 +583,88 @@ export default function DashboardPage() {
             setError(getErrorMessage(deleteError));
         } finally {
             setDeletingApplicationId(null);
+        }
+    }
+
+    function startEditCompany(company: DashboardCompanyItem) {
+        setEditingCompanyId(company.id);
+        setEditingCompanyValues({
+            name: company.name,
+            website_url: company.website_url ?? '',
+            contacts: company.contacts ?? '',
+            notes: company.notes ?? '',
+        });
+    }
+
+    function cancelEditCompany() {
+        setEditingCompanyId(null);
+        setEditingCompanyValues(getInitialCompanyFormState());
+    }
+
+    async function saveEditCompany(companyId: string) {
+        setSavingCompanyId(companyId);
+        setError(null);
+
+        try {
+            const updated = await parseResponse<DashboardCompanyItem>(
+                await fetch(`/api/companies/${companyId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editingCompanyValues),
+                })
+            );
+
+            setData(current =>
+                current
+                    ? {
+                          ...current,
+                          companies: current.companies.map(item =>
+                              item.id === companyId ? updated : item
+                          ),
+                      }
+                    : current
+            );
+            cancelEditCompany();
+        } catch (saveError) {
+            setError(getErrorMessage(saveError));
+        } finally {
+            setSavingCompanyId(null);
+        }
+    }
+
+    async function handleDeleteCompany(companyId: string) {
+        const confirmed = window.confirm('Delete this company?');
+        if (!confirmed) return;
+
+        setDeletingCompanyId(companyId);
+        setError(null);
+
+        try {
+            const response = await fetch(`/api/companies/${companyId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const payload = await response.json().catch(() => null);
+                throw new Error(payload?.error ?? 'Request failed');
+            }
+
+            setData(current =>
+                current
+                    ? {
+                          ...current,
+                          companies: current.companies.filter(item => item.id !== companyId),
+                      }
+                    : current
+            );
+
+            if (editingCompanyId === companyId) {
+                cancelEditCompany();
+            }
+        } catch (deleteError) {
+            setError(getErrorMessage(deleteError));
+        } finally {
+            setDeletingCompanyId(null);
         }
     }
 
@@ -987,6 +1145,242 @@ export default function DashboardPage() {
                         ) : null}
                     </div>
                 )}
+            </div>
+
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Companies</h3>
+                        <p className="text-sm text-slate-300">Showing your saved companies to apply.</p>
+                    </div>
+
+                    <div className="w-full max-w-sm">
+                        <label htmlFor="dashboard-companies-filter" className="label">
+                            Filter by company or role
+                        </label>
+                        <input
+                            id="dashboard-companies-filter"
+                            type="text"
+                            className="input"
+                            placeholder="Search company..."
+                            value={companiesFilter}
+                            onChange={event => setCompaniesFilter(event.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Website</th>
+                                <th>Contacts</th>
+                                <th>Notes</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paginatedCompanies.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                                        No companies found for this filter.
+                                    </td>
+                                </tr>
+                            ) : (
+                                paginatedCompanies.map(company => {
+                                    const rowBusy =
+                                        savingCompanyId === company.id || deletingCompanyId === company.id;
+                                    const isEditing = editingCompanyId === company.id;
+                                    const safeWebsiteUrl = toSafeExternalUrl(company.website_url);
+
+                                    return (
+                                        <tr key={company.id}>
+                                            <td>
+                                                {isEditing ? (
+                                                    <input
+                                                        className="input min-w-[180px]"
+                                                        value={editingCompanyValues.name}
+                                                        onChange={event =>
+                                                            setEditingCompanyValues(current => ({
+                                                                ...current,
+                                                                name: event.target.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                ) : (
+                                                    company.name
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isEditing ? (
+                                                    <input
+                                                        className="input min-w-[200px]"
+                                                        value={editingCompanyValues.website_url}
+                                                        onChange={event =>
+                                                            setEditingCompanyValues(current => ({
+                                                                ...current,
+                                                                website_url: event.target.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                ) : safeWebsiteUrl ? (
+                                                    <a
+                                                        href={safeWebsiteUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-cyan-300 hover:underline"
+                                                    >
+                                                        Open
+                                                    </a>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isEditing ? (
+                                                    <input
+                                                        className="input min-w-[200px]"
+                                                        value={editingCompanyValues.contacts}
+                                                        onChange={event =>
+                                                            setEditingCompanyValues(current => ({
+                                                                ...current,
+                                                                contacts: event.target.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                ) : (
+                                                    company.contacts || '-'
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isEditing ? (
+                                                    <input
+                                                        className="input min-w-[220px]"
+                                                        value={editingCompanyValues.notes}
+                                                        onChange={event =>
+                                                            setEditingCompanyValues(current => ({
+                                                                ...current,
+                                                                notes: event.target.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                ) : (
+                                                    company.notes || '-'
+                                                )}
+                                            </td>
+                                            <td>{new Date(company.created_at).toLocaleDateString()}</td>
+                                            <td>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                className="btn-primary"
+                                                                disabled={rowBusy}
+                                                                onClick={() => saveEditCompany(company.id)}
+                                                            >
+                                                                {savingCompanyId === company.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <Save className="h-4 w-4" />
+                                                                )}
+                                                                Save
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn-secondary"
+                                                                disabled={rowBusy}
+                                                                onClick={cancelEditCompany}
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                                Cancel
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            className="btn-secondary"
+                                                            disabled={rowBusy}
+                                                            onClick={() => startEditCompany(company)}
+                                                        >
+                                                            <Edit3 className="h-4 w-4" />
+                                                            Edit
+                                                        </button>
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        className="btn-danger"
+                                                        disabled={rowBusy}
+                                                        onClick={() => handleDeleteCompany(company.id)}
+                                                    >
+                                                        {deletingCompanyId === company.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-slate-400">{companiesPageSummary}</p>
+
+                    {filteredCompanies.length > COMPANIES_PER_PAGE ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                disabled={companiesPage <= 1}
+                                onClick={() =>
+                                    setCompaniesPage(current => Math.max(1, current - 1))
+                                }
+                            >
+                                Previous
+                            </button>
+
+                            {Array.from({ length: totalCompaniesPages }, (_, index) => index + 1).map(
+                                page => (
+                                    <button
+                                        key={page}
+                                        type="button"
+                                        onClick={() => setCompaniesPage(page)}
+                                        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                            companiesPage === page
+                                                ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                )
+                            )}
+
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                disabled={companiesPage >= totalCompaniesPages}
+                                onClick={() =>
+                                    setCompaniesPage(current =>
+                                        Math.min(totalCompaniesPages, current + 1)
+                                    )
+                                }
+                            >
+                                Next
+                            </button>
+                        </div>
+                    ) : null}
+                </div>
             </div>
 
             <div className="card p-4">

@@ -49,6 +49,15 @@ type DashboardWebsiteItem = {
     created_at: string;
 };
 
+type DashboardCompanyItem = {
+    id: string;
+    name: string;
+    website_url: string | null;
+    contacts: string | null;
+    notes: string | null;
+    created_at: string;
+};
+
 type DashboardPitchItem = {
     id: string;
     name: string;
@@ -175,6 +184,17 @@ export async function GET() {
 
     const websites_to_apply: DashboardWebsiteItem[] = websitesData ?? [];
 
+    const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('id, name, website_url, contacts, notes, created_at')
+        .order('created_at', { ascending: false });
+
+    if (companiesError) {
+        return NextResponse.json({ error: companiesError.message }, { status: 500 });
+    }
+
+    const companies: DashboardCompanyItem[] = companiesData ?? [];
+
     const { data: pitchesData, error: pitchesError } = await supabase
         .from('pitches')
         .select('id, name, pitch, created_at')
@@ -192,6 +212,7 @@ export async function GET() {
         applications_per_year,
         applications_list: applications,
         websites_to_apply,
+        companies,
         pitches,
         due_follow_ups: networking_followups.filter(item => item.days_until_follow_up <= 0).length,
         networking_followups,
