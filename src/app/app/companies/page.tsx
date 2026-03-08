@@ -26,6 +26,22 @@ function getErrorMessage(error: unknown) {
     return 'Something went wrong';
 }
 
+function toSafeExternalUrl(value: string | null) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -279,6 +295,7 @@ export default function CompaniesPage() {
                             companies.map(company => {
                                 const rowBusy = savingRowId === company.id || deletingRowId === company.id;
                                 const isEditing = editingId === company.id;
+                                const safeWebsiteUrl = toSafeExternalUrl(company.website_url);
                                 return (
                                     <tr key={company.id}>
                                         <td>
@@ -309,9 +326,9 @@ export default function CompaniesPage() {
                                                         }))
                                                     }
                                                 />
-                                            ) : company.website_url ? (
+                                            ) : safeWebsiteUrl ? (
                                                 <Link
-                                                    href={company.website_url}
+                                                    href={safeWebsiteUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-cyan-300 hover:underline"

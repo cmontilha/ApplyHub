@@ -7,6 +7,19 @@ type SetSessionPayload = {
 };
 
 export async function POST(request: Request) {
+    const contentType = request.headers.get('content-type') ?? '';
+    if (!contentType.toLowerCase().includes('application/json')) {
+        return NextResponse.json({ error: 'Unsupported content type' }, { status: 415 });
+    }
+
+    const origin = request.headers.get('origin');
+    if (origin) {
+        const requestOrigin = new URL(request.url).origin;
+        if (origin !== requestOrigin) {
+            return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+        }
+    }
+
     let body: SetSessionPayload;
 
     try {

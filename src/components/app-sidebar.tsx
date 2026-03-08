@@ -18,16 +18,40 @@ import {
     Users,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-    { href: '/app/dashboard', label: 'Dashboard', icon: BarChart3 },
-    { href: '/app/applications', label: 'Applications', icon: Briefcase },
-    { href: '/app/companies', label: 'Companies', icon: Building2 },
-    { href: '/app/networking', label: 'Networking', icon: Users },
-    { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
-    { href: '/app/pitch', label: 'Pitch', icon: MessageSquare },
-    { href: '/app/websites-to-apply', label: 'Websites To Apply', icon: Globe2 },
-    { href: '/app/resumes', label: 'Resumes', icon: FolderOpen },
-    { href: '/app/tips-for-resume', label: 'Tips for Resume', icon: FileText },
+type NavItem = {
+    href: string;
+    label: string;
+    icon: typeof BarChart3;
+};
+
+type NavSection = {
+    title: string;
+    items: NavItem[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
+    {
+        title: 'Overview',
+        items: [{ href: '/app/dashboard', label: 'Dashboard', icon: BarChart3 }],
+    },
+    {
+        title: 'Pipeline',
+        items: [
+            { href: '/app/applications', label: 'Applications', icon: Briefcase },
+            { href: '/app/companies', label: 'Companies', icon: Building2 },
+            { href: '/app/networking', label: 'Networking', icon: Users },
+            { href: '/app/websites-to-apply', label: 'Websites To Apply', icon: Globe2 },
+        ],
+    },
+    {
+        title: 'Career Assets',
+        items: [
+            { href: '/app/resumes', label: 'Resumes', icon: FolderOpen },
+            { href: '/app/pitch', label: 'Pitch', icon: MessageSquare },
+            { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
+            { href: '/app/tips-for-resume', label: 'Tips for Resume', icon: FileText },
+        ],
+    },
 ];
 
 export function AppSidebar() {
@@ -76,26 +100,40 @@ export function AppSidebar() {
                 </Link>
             </div>
 
-            <nav className="grid grid-cols-2 gap-2 px-4 pb-4 md:grid-cols-1 md:gap-1 md:pb-0">
-                {NAV_ITEMS.map(item => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            title={item.label}
-                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
-                                isActive
-                                    ? 'border-cyan-300/50 bg-cyan-300/20 text-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]'
-                                    : 'border-transparent text-slate-300 hover:border-cyan-300/30 hover:bg-slate-800/50 hover:text-slate-100'
-                            } ${isCollapsed ? 'md:justify-center md:px-2' : ''}`}
+            <nav className="space-y-3 px-4 pb-4 md:space-y-4 md:pb-0">
+                {NAV_SECTIONS.map(section => (
+                    <section key={section.title} className="space-y-1.5">
+                        <p
+                            className={`px-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 ${
+                                isCollapsed ? 'md:hidden' : ''
+                            }`}
                         >
-                            <Icon className="h-4 w-4" />
-                            <span className={`${isCollapsed ? 'md:hidden' : ''}`}>{item.label}</span>
-                        </Link>
-                    );
-                })}
+                            {section.title}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 md:grid-cols-1 md:gap-1">
+                            {section.items.map(item => {
+                                const isActive = pathname === item.href;
+                                const Icon = item.icon;
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        title={`${section.title} • ${item.label}`}
+                                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
+                                            isActive
+                                                ? 'border-cyan-300/50 bg-cyan-300/20 text-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]'
+                                                : 'border-transparent text-slate-300 hover:border-cyan-300/30 hover:bg-slate-800/50 hover:text-slate-100'
+                                        } ${isCollapsed ? 'md:justify-center md:px-2' : ''}`}
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                        <span className={`${isCollapsed ? 'md:hidden' : ''}`}>{item.label}</span>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </section>
+                ))}
             </nav>
 
             <div className="px-4 pb-4 pt-4 md:mt-auto">

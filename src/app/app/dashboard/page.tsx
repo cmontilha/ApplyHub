@@ -19,9 +19,6 @@ type DashboardFollowUpItem = {
     name: string;
     company: string | null;
     role_title: string | null;
-    email: string | null;
-    phone: string | null;
-    linkedin_url: string | null;
     last_contact_at: string | null;
     next_follow_up_at: string;
     days_until_follow_up: number;

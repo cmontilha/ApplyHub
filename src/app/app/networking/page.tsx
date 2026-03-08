@@ -55,6 +55,22 @@ function formatDate(value: string | null) {
     return new Date(year, month - 1, day).toLocaleDateString();
 }
 
+function toSafeExternalUrl(value: string | null) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
 export default function NetworkingPage() {
     const [contacts, setContacts] = useState<NetworkingContact[]>([]);
     const [formValues, setFormValues] = useState<NetworkingFormValues>(getInitialFormState);
@@ -414,6 +430,7 @@ export default function NetworkingPage() {
                                     deletingRowId === contact.id ||
                                     followUpRowId === contact.id;
                                 const isEditing = editingId === contact.id;
+                                const safeLinkedinUrl = toSafeExternalUrl(contact.linkedin_url);
                                 return (
                                     <tr key={contact.id}>
                                         <td>
@@ -508,9 +525,9 @@ export default function NetworkingPage() {
                                                         }))
                                                     }
                                                 />
-                                            ) : contact.linkedin_url ? (
+                                            ) : safeLinkedinUrl ? (
                                                 <Link
-                                                    href={contact.linkedin_url}
+                                                    href={safeLinkedinUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1 text-cyan-300 hover:underline"

@@ -17,9 +17,6 @@ type DashboardFollowUpItem = {
     name: string;
     company: string | null;
     role_title: string | null;
-    email: string | null;
-    phone: string | null;
-    linkedin_url: string | null;
     last_contact_at: string | null;
     next_follow_up_at: string;
     days_until_follow_up: number;
@@ -143,9 +140,7 @@ export async function GET() {
 
     const { data: followUpsData, error: followUpsError } = await supabase
         .from('networking_contacts')
-        .select(
-            'id, name, company, role_title, email, phone, linkedin_url, last_contact_at, next_follow_up_at'
-        )
+        .select('id, name, company, role_title, last_contact_at, next_follow_up_at')
         .not('next_follow_up_at', 'is', null)
         .order('next_follow_up_at', { ascending: true });
 
@@ -163,9 +158,6 @@ export async function GET() {
                 name: item.name,
                 company: item.company,
                 role_title: item.role_title,
-                email: item.email,
-                phone: item.phone,
-                linkedin_url: item.linkedin_url,
                 last_contact_at: item.last_contact_at,
                 next_follow_up_at: item.next_follow_up_at as string,
                 days_until_follow_up: daysUntilFollowUp,

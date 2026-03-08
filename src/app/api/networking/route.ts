@@ -20,6 +20,24 @@ type CreateNetworkingPayload = {
     last_contact_at?: unknown;
 };
 
+function toNullableHttpUrl(value: unknown) {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value !== 'string') return null;
+
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
 export async function GET() {
     const supabase = createClient();
     const {
@@ -65,7 +83,16 @@ export async function POST(request: Request) {
 
     const email = toNullableString(body.email);
     const phone = toNullableString(body.phone);
-    const linkedin_url = toNullableString(body.linkedin_url);
+    const linkedin_url = toNullableHttpUrl(body.linkedin_url);
+
+    if (body.linkedin_url !== undefined && body.linkedin_url !== null && body.linkedin_url !== '') {
+        if (!linkedin_url) {
+            return NextResponse.json(
+                { error: 'linkedin_url must be a valid http/https URL' },
+                { status: 400 }
+            );
+        }
+    }
 
     if (!email && !phone && !linkedin_url) {
         return NextResponse.json(
