@@ -5,6 +5,11 @@ import './globals.css';
 export const metadata: Metadata = {
     title: 'ApplyHub',
     description: 'A focused workspace to track applications, companies and certifications.',
+    icons: {
+        icon: '/brand/applyhub-logo.png',
+        shortcut: '/brand/applyhub-logo.png',
+        apple: '/brand/applyhub-logo.png',
+    },
 };
 
 export default function RootLayout({
