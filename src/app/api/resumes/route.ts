@@ -52,6 +52,7 @@ export async function GET() {
 
         if (!signedUrlsError && signedUrls) {
             for (const item of signedUrls) {
+                if (!item.path) continue;
                 signedUrlByPath.set(item.path, item.signedUrl ?? null);
             }
         }
