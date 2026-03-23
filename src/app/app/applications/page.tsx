@@ -28,6 +28,10 @@ type ApplicationFormValues = {
     notes: string;
 };
 
+type PaginationItem = number | 'ellipsis';
+
+const APPLICATIONS_PER_PAGE = 10;
+
 function getInitialFormState(): ApplicationFormValues {
     const now = new Date();
     const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
@@ -93,6 +97,43 @@ function toSafeExternalUrl(value: string | null) {
     }
 }
 
+function getPaginationItems(currentPage: number, totalPages: number): PaginationItem[] {
+    if (totalPages <= 1) return [1];
+
+    const pages = new Set<number>([1, totalPages]);
+
+    for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+        if (page > 1 && page < totalPages) {
+            pages.add(page);
+        }
+    }
+
+    if (currentPage <= 3) {
+        for (let page = 2; page <= Math.min(4, totalPages - 1); page += 1) {
+            pages.add(page);
+        }
+    }
+
+    if (currentPage >= totalPages - 2) {
+        for (let page = Math.max(2, totalPages - 3); page < totalPages; page += 1) {
+            pages.add(page);
+        }
+    }
+
+    const sortedPages = Array.from(pages).sort((a, b) => a - b);
+    const items: PaginationItem[] = [];
+
+    sortedPages.forEach((page, index) => {
+        const previousPage = sortedPages[index - 1];
+        if (index > 0 && previousPage !== undefined && page - previousPage > 1) {
+            items.push('ellipsis');
+        }
+        items.push(page);
+    });
+
+    return items;
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -112,6 +153,7 @@ export default function ApplicationsPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingValues, setEditingValues] = useState<ApplicationFormValues>(getInitialFormState);
     const [companyFilter, setCompanyFilter] = useState('');
+    const [applicationsPage, setApplicationsPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const appliedDateInputRef = useRef<HTMLInputElement | null>(null);
@@ -141,6 +183,10 @@ export default function ApplicationsPage() {
     useEffect(() => {
         void loadApplications();
     }, []);
+
+    useEffect(() => {
+        setApplicationsPage(1);
+    }, [companyFilter, applications.length]);
 
     async function handleCreateApplication(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -273,6 +319,39 @@ export default function ApplicationsPage() {
                 item.role_title.toLowerCase().includes(normalizedFilter)
         );
     }, [applications, companyFilter]);
+
+    const totalApplicationsPages = useMemo(() => {
+        return Math.max(1, Math.ceil(filteredApplications.length / APPLICATIONS_PER_PAGE));
+    }, [filteredApplications.length]);
+
+    const applicationsPaginationItems = useMemo(
+        () => getPaginationItems(applicationsPage, totalApplicationsPages),
+        [applicationsPage, totalApplicationsPages]
+    );
+
+    useEffect(() => {
+        if (applicationsPage > totalApplicationsPages) {
+            setApplicationsPage(totalApplicationsPages);
+        }
+    }, [applicationsPage, totalApplicationsPages]);
+
+    const paginatedApplications = useMemo(() => {
+        const safePage = Math.min(applicationsPage, totalApplicationsPages);
+        const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
+        return filteredApplications.slice(startIndex, startIndex + APPLICATIONS_PER_PAGE);
+    }, [applicationsPage, filteredApplications, totalApplicationsPages]);
+
+    const applicationsPageSummary = useMemo(() => {
+        if (filteredApplications.length === 0) {
+            return 'Showing 0 of 0';
+        }
+
+        const safePage = Math.min(applicationsPage, totalApplicationsPages);
+        const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
+        const from = startIndex + 1;
+        const to = Math.min(startIndex + APPLICATIONS_PER_PAGE, filteredApplications.length);
+        return `Showing ${from}-${to} of ${filteredApplications.length}`;
+    }, [applicationsPage, filteredApplications.length, totalApplicationsPages]);
 
     return (
         <section className="space-y-6">
@@ -575,7 +654,7 @@ export default function ApplicationsPage() {
                                 </td>
                             </tr>
                         ) : (
-                            filteredApplications.map(application => {
+                            paginatedApplications.map(application => {
                                 const rowBusy =
                                     savingRowId === application.id || deletingRowId === application.id;
                                 const isEditing = editingId === application.id;
@@ -881,6 +960,64 @@ export default function ApplicationsPage() {
                     </tbody>
                 </table>
                 </div>
+
+                {!loadingList ? (
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-slate-400">{applicationsPageSummary}</p>
+
+                        {filteredApplications.length > APPLICATIONS_PER_PAGE ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    disabled={applicationsPage <= 1}
+                                    onClick={() =>
+                                        setApplicationsPage(current => Math.max(1, current - 1))
+                                    }
+                                >
+                                    Previous
+                                </button>
+
+                                {applicationsPaginationItems.map((item, index) =>
+                                    item === 'ellipsis' ? (
+                                        <span
+                                            key={`applications-ellipsis-${index}`}
+                                            className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-slate-400"
+                                        >
+                                            ...
+                                        </span>
+                                    ) : (
+                                        <button
+                                            key={item}
+                                            type="button"
+                                            onClick={() => setApplicationsPage(item)}
+                                            className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                                applicationsPage === item
+                                                    ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                    : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                            }`}
+                                        >
+                                            {item}
+                                        </button>
+                                    )
+                                )}
+
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    disabled={applicationsPage >= totalApplicationsPages}
+                                    onClick={() =>
+                                        setApplicationsPage(current =>
+                                            Math.min(totalApplicationsPages, current + 1)
+                                        )
+                                    }
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
         </section>
     );

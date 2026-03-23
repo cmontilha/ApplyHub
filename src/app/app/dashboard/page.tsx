@@ -80,6 +80,7 @@ type DashboardData = {
 };
 
 type ChartView = 'monthly' | 'yearly';
+type PaginationItem = number | 'ellipsis';
 
 type DashboardApplicationItem = {
     id: string;
@@ -96,6 +97,7 @@ type DashboardApplicationItem = {
 };
 
 const APPLICATIONS_PER_PAGE = 10;
+const WATCH_LIST_PER_PAGE = 10;
 const WEBSITES_PER_PAGE = 5;
 const COMPANIES_PER_PAGE = 3;
 const FOLLOW_UPS_PER_PAGE = 5;
@@ -150,6 +152,43 @@ function getPitchPreview(value: string) {
     return `${normalized.slice(0, 160)}...`;
 }
 
+function getPaginationItems(currentPage: number, totalPages: number): PaginationItem[] {
+    if (totalPages <= 1) return [1];
+
+    const pages = new Set<number>([1, totalPages]);
+
+    for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+        if (page > 1 && page < totalPages) {
+            pages.add(page);
+        }
+    }
+
+    if (currentPage <= 3) {
+        for (let page = 2; page <= Math.min(4, totalPages - 1); page += 1) {
+            pages.add(page);
+        }
+    }
+
+    if (currentPage >= totalPages - 2) {
+        for (let page = Math.max(2, totalPages - 3); page < totalPages; page += 1) {
+            pages.add(page);
+        }
+    }
+
+    const sortedPages = Array.from(pages).sort((a, b) => a - b);
+    const items: PaginationItem[] = [];
+
+    sortedPages.forEach((page, index) => {
+        const previousPage = sortedPages[index - 1];
+        if (index > 0 && previousPage !== undefined && page - previousPage > 1) {
+            items.push('ellipsis');
+        }
+        items.push(page);
+    });
+
+    return items;
+}
+
 export default function DashboardPage() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -159,6 +198,7 @@ export default function DashboardPage() {
     const [companyFilter, setCompanyFilter] = useState('');
     const [companiesFilter, setCompaniesFilter] = useState('');
     const [applicationsPage, setApplicationsPage] = useState(1);
+    const [watchListPage, setWatchListPage] = useState(1);
     const [websitesPage, setWebsitesPage] = useState(1);
     const [companiesPage, setCompaniesPage] = useState(1);
     const [followUpsPage, setFollowUpsPage] = useState(1);
@@ -276,6 +316,9 @@ export default function DashboardPage() {
             total_offers: 0,
             referral_count: 0,
         };
+        const watchListCount = (data?.applications_list ?? []).filter(
+            item => item.status === 'in_progress' || item.status === 'interview'
+        ).length;
 
         const defaultToneClass =
             'border-cyan-300/20 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-blue-950/80';
@@ -284,6 +327,12 @@ export default function DashboardPage() {
             {
                 label: 'Total Applications',
                 value: metrics.total_applications,
+                toneClass: defaultToneClass,
+                valueClass: 'text-slate-100',
+            },
+            {
+                label: 'Watch List Applications',
+                value: watchListCount,
                 toneClass: defaultToneClass,
                 valueClass: 'text-slate-100',
             },
@@ -307,12 +356,6 @@ export default function DashboardPage() {
                 toneClass:
                     'border-emerald-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-emerald-950/50',
                 valueClass: 'text-emerald-200',
-            },
-            {
-                label: 'Referral Applications',
-                value: metrics.referral_count,
-                toneClass: defaultToneClass,
-                valueClass: 'text-slate-100',
             },
             {
                 label: 'Referral Ratio',
@@ -389,6 +432,43 @@ export default function DashboardPage() {
         );
     }, [data]);
 
+    useEffect(() => {
+        setWatchListPage(1);
+    }, [watchListApplications.length]);
+
+    const totalWatchListPages = useMemo(() => {
+        return Math.max(1, Math.ceil(watchListApplications.length / WATCH_LIST_PER_PAGE));
+    }, [watchListApplications.length]);
+
+    const watchListPaginationItems = useMemo(
+        () => getPaginationItems(watchListPage, totalWatchListPages),
+        [watchListPage, totalWatchListPages]
+    );
+
+    useEffect(() => {
+        if (watchListPage > totalWatchListPages) {
+            setWatchListPage(totalWatchListPages);
+        }
+    }, [watchListPage, totalWatchListPages]);
+
+    const paginatedWatchListApplications = useMemo(() => {
+        const safePage = Math.min(watchListPage, totalWatchListPages);
+        const startIndex = (safePage - 1) * WATCH_LIST_PER_PAGE;
+        return watchListApplications.slice(startIndex, startIndex + WATCH_LIST_PER_PAGE);
+    }, [watchListApplications, watchListPage, totalWatchListPages]);
+
+    const watchListPageSummary = useMemo(() => {
+        if (watchListApplications.length === 0) {
+            return 'Showing 0 of 0';
+        }
+
+        const safePage = Math.min(watchListPage, totalWatchListPages);
+        const startIndex = (safePage - 1) * WATCH_LIST_PER_PAGE;
+        const from = startIndex + 1;
+        const to = Math.min(startIndex + WATCH_LIST_PER_PAGE, watchListApplications.length);
+        return `Showing ${from}-${to} of ${watchListApplications.length}`;
+    }, [watchListApplications.length, watchListPage, totalWatchListPages]);
+
     const watchListMetrics = useMemo(() => {
         let inProgress = 0;
         let interview = 0;
@@ -419,6 +499,10 @@ export default function DashboardPage() {
     const totalApplicationsPages = useMemo(() => {
         return Math.max(1, Math.ceil(filteredApplications.length / APPLICATIONS_PER_PAGE));
     }, [filteredApplications.length]);
+    const applicationsPaginationItems = useMemo(
+        () => getPaginationItems(applicationsPage, totalApplicationsPages),
+        [applicationsPage, totalApplicationsPages]
+    );
 
     useEffect(() => {
         if (applicationsPage > totalApplicationsPages) {
@@ -448,6 +532,10 @@ export default function DashboardPage() {
         if (!data) return 1;
         return Math.max(1, Math.ceil(data.websites_to_apply.length / WEBSITES_PER_PAGE));
     }, [data]);
+    const websitesPaginationItems = useMemo(
+        () => getPaginationItems(websitesPage, totalWebsitesPages),
+        [websitesPage, totalWebsitesPages]
+    );
 
     useEffect(() => {
         if (websitesPage > totalWebsitesPages) {
@@ -486,6 +574,10 @@ export default function DashboardPage() {
     const totalCompaniesPages = useMemo(() => {
         return Math.max(1, Math.ceil(filteredCompanies.length / COMPANIES_PER_PAGE));
     }, [filteredCompanies.length]);
+    const companiesPaginationItems = useMemo(
+        () => getPaginationItems(companiesPage, totalCompaniesPages),
+        [companiesPage, totalCompaniesPages]
+    );
 
     useEffect(() => {
         if (companiesPage > totalCompaniesPages) {
@@ -515,6 +607,10 @@ export default function DashboardPage() {
         if (!data) return 1;
         return Math.max(1, Math.ceil(data.networking_followups.length / FOLLOW_UPS_PER_PAGE));
     }, [data]);
+    const followUpsPaginationItems = useMemo(
+        () => getPaginationItems(followUpsPage, totalFollowUpsPages),
+        [followUpsPage, totalFollowUpsPages]
+    );
 
     useEffect(() => {
         if (followUpsPage > totalFollowUpsPages) {
@@ -827,60 +923,116 @@ export default function DashboardPage() {
                         No applications in In Progress or Interview yet.
                     </p>
                 ) : (
-                    <div className="table-wrapper">
-                        <table className="min-w-[1200px]">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Company</th>
-                                    <th>Role</th>
-                                    <th>Work Mode</th>
-                                    <th>Location</th>
-                                    <th>Job URL</th>
-                                    <th>Status</th>
-                                    <th>Category</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {watchListApplications.map(application => {
-                                    const safeJobUrl = toSafeExternalUrl(application.job_url);
-                                    const statusClass =
-                                        application.status === 'interview'
-                                            ? 'border border-amber-500/40 bg-amber-500/15 text-amber-200'
-                                            : 'border border-cyan-500/40 bg-cyan-500/15 text-cyan-200';
+                    <div className="space-y-3">
+                        <div className="table-wrapper">
+                            <table className="min-w-[1200px]">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Company</th>
+                                        <th>Role</th>
+                                        <th>Work Mode</th>
+                                        <th>Location</th>
+                                        <th>Job URL</th>
+                                        <th>Status</th>
+                                        <th>Category</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {paginatedWatchListApplications.map(application => {
+                                        const safeJobUrl = toSafeExternalUrl(application.job_url);
+                                        const statusClass =
+                                            application.status === 'interview'
+                                                ? 'border border-amber-500/40 bg-amber-500/15 text-amber-200'
+                                                : 'border border-cyan-500/40 bg-cyan-500/15 text-cyan-200';
 
-                                    return (
-                                        <tr key={`watch-${application.id}`}>
-                                            <td>{application.applied_date}</td>
-                                            <td>{application.company}</td>
-                                            <td>{application.role_title}</td>
-                                            <td>{toLabel(application.work_mode)}</td>
-                                            <td>{application.location || '-'}</td>
-                                            <td>
-                                                {safeJobUrl ? (
-                                                    <a
-                                                        href={safeJobUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-cyan-300 hover:underline"
-                                                    >
-                                                        Open
-                                                    </a>
-                                                ) : (
-                                                    '-'
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${statusClass}`}>
-                                                    {toLabel(application.status)}
-                                                </span>
-                                            </td>
-                                            <td>{toLabel(application.category)}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                        return (
+                                            <tr key={`watch-${application.id}`}>
+                                                <td>{application.applied_date}</td>
+                                                <td>{application.company}</td>
+                                                <td>{application.role_title}</td>
+                                                <td>{toLabel(application.work_mode)}</td>
+                                                <td>{application.location || '-'}</td>
+                                                <td>
+                                                    {safeJobUrl ? (
+                                                        <a
+                                                            href={safeJobUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-cyan-300 hover:underline"
+                                                        >
+                                                            Open
+                                                        </a>
+                                                    ) : (
+                                                        '-'
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <span className={`badge ${statusClass}`}>
+                                                        {toLabel(application.status)}
+                                                    </span>
+                                                </td>
+                                                <td>{toLabel(application.category)}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-xs text-slate-400">{watchListPageSummary}</p>
+
+                            {watchListApplications.length > WATCH_LIST_PER_PAGE ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        disabled={watchListPage <= 1}
+                                        onClick={() => setWatchListPage(current => Math.max(1, current - 1))}
+                                    >
+                                        Previous
+                                    </button>
+
+                                    {watchListPaginationItems.map((item, index) =>
+                                        item === 'ellipsis' ? (
+                                            <span
+                                                key={`watchlist-ellipsis-${index}`}
+                                                className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-slate-400"
+                                            >
+                                                ...
+                                            </span>
+                                        ) : (
+                                            <button
+                                                key={item}
+                                                type="button"
+                                                onClick={() => setWatchListPage(item)}
+                                                className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                                    watchListPage === item
+                                                        ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                        : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                                }`}
+                                            >
+                                                {item}
+                                            </button>
+                                        )
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        disabled={watchListPage >= totalWatchListPages}
+                                        onClick={() =>
+                                            setWatchListPage(current =>
+                                                Math.min(totalWatchListPages, current + 1)
+                                            )
+                                        }
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            ) : null}
+                        </div>
                     </div>
                 )}
             </div>
@@ -1007,20 +1159,29 @@ export default function DashboardPage() {
                             Previous
                         </button>
 
-                        {Array.from({ length: totalApplicationsPages }, (_, index) => index + 1).map(page => (
-                            <button
-                                key={page}
-                                type="button"
-                                onClick={() => setApplicationsPage(page)}
-                                className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
-                                    applicationsPage === page
-                                        ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
-                                        : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
-                                }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
+                        {applicationsPaginationItems.map((item, index) =>
+                            item === 'ellipsis' ? (
+                                <span
+                                    key={`applications-ellipsis-${index}`}
+                                    className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-slate-400"
+                                >
+                                    ...
+                                </span>
+                            ) : (
+                                <button
+                                    key={item}
+                                    type="button"
+                                    onClick={() => setApplicationsPage(item)}
+                                    className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                        applicationsPage === item
+                                            ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                            : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                    }`}
+                                >
+                                    {item}
+                                </button>
+                            )
+                        )}
 
                         <button
                             type="button"
@@ -1107,23 +1268,29 @@ export default function DashboardPage() {
                                         Previous
                                     </button>
 
-                                    {Array.from(
-                                        { length: totalWebsitesPages },
-                                        (_, index) => index + 1
-                                    ).map(page => (
-                                        <button
-                                            key={page}
-                                            type="button"
-                                            onClick={() => setWebsitesPage(page)}
-                                            className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
-                                                websitesPage === page
-                                                    ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
-                                                    : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
-                                            }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    ))}
+                                    {websitesPaginationItems.map((item, index) =>
+                                        item === 'ellipsis' ? (
+                                            <span
+                                                key={`websites-ellipsis-${index}`}
+                                                className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-slate-400"
+                                            >
+                                                ...
+                                            </span>
+                                        ) : (
+                                            <button
+                                                key={item}
+                                                type="button"
+                                                onClick={() => setWebsitesPage(item)}
+                                                className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                                    websitesPage === item
+                                                        ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                        : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                                }`}
+                                            >
+                                                {item}
+                                            </button>
+                                        )
+                                    )}
 
                                     <button
                                         type="button"
@@ -1346,19 +1513,26 @@ export default function DashboardPage() {
                                 Previous
                             </button>
 
-                            {Array.from({ length: totalCompaniesPages }, (_, index) => index + 1).map(
-                                page => (
+                            {companiesPaginationItems.map((item, index) =>
+                                item === 'ellipsis' ? (
+                                    <span
+                                        key={`companies-ellipsis-${index}`}
+                                        className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-slate-400"
+                                    >
+                                        ...
+                                    </span>
+                                ) : (
                                     <button
-                                        key={page}
+                                        key={item}
                                         type="button"
-                                        onClick={() => setCompaniesPage(page)}
+                                        onClick={() => setCompaniesPage(item)}
                                         className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
-                                            companiesPage === page
+                                            companiesPage === item
                                                 ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
                                                 : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
                                         }`}
                                     >
-                                        {page}
+                                        {item}
                                     </button>
                                 )
                             )}
@@ -1501,23 +1675,29 @@ export default function DashboardPage() {
                                         Previous
                                     </button>
 
-                                    {Array.from(
-                                        { length: totalFollowUpsPages },
-                                        (_, index) => index + 1
-                                    ).map(page => (
-                                        <button
-                                            key={page}
-                                            type="button"
-                                            onClick={() => setFollowUpsPage(page)}
-                                            className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
-                                                followUpsPage === page
-                                                    ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
-                                                    : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
-                                            }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    ))}
+                                    {followUpsPaginationItems.map((item, index) =>
+                                        item === 'ellipsis' ? (
+                                            <span
+                                                key={`followups-ellipsis-${index}`}
+                                                className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-slate-400"
+                                            >
+                                                ...
+                                            </span>
+                                        ) : (
+                                            <button
+                                                key={item}
+                                                type="button"
+                                                onClick={() => setFollowUpsPage(item)}
+                                                className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
+                                                    followUpsPage === item
+                                                        ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
+                                                        : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-cyan-300/40 hover:text-slate-100'
+                                                }`}
+                                            >
+                                                {item}
+                                            </button>
+                                        )
+                                    )}
 
                                     <button
                                         type="button"
