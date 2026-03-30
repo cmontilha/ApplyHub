@@ -14,6 +14,7 @@ import {
     FileText,
     Globe2,
     GraduationCap,
+    Linkedin,
     MessageSquare,
     Users,
 } from 'lucide-react';
@@ -50,6 +51,7 @@ const NAV_SECTIONS: NavSection[] = [
             { href: '/app/pitch', label: 'Pitch', icon: MessageSquare },
             { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
             { href: '/app/tips-for-resume', label: 'Tips for Resume', icon: FileText },
+            { href: '/app/linkedin-content', label: 'LinkedIn Content', icon: Linkedin },
         ],
     },
 ];

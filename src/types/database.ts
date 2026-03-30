@@ -11,6 +11,7 @@ export type ApplicationStatus = 'applied' | 'in_progress' | 'interview' | 'rejec
 export type ApplicationCategory = 'referral' | 'no_referral' | 'recruiter_contact';
 export type CertDifficulty = 'easy' | 'medium' | 'hard';
 export type WebsiteApplicationType = 'both' | 'nacional' | 'internacional';
+export type LinkedinContentStatus = 'planned' | 'scheduled' | 'posted' | 'not_done';
 
 export interface Application {
     id: string;
@@ -84,6 +85,22 @@ export interface Pitch {
     created_at: string;
 }
 
+export interface LinkedinContentPlan {
+    id: string;
+    user_id: string;
+    scheduled_date: string;
+    scheduled_time: string;
+    theme: string;
+    content_type: string | null;
+    title_hook: string | null;
+    content: string | null;
+    objective: string | null;
+    cta: string | null;
+    status: LinkedinContentStatus;
+    performance: string | null;
+    created_at: string;
+}
+
 export interface Resume {
     id: string;
     user_id: string;
@@ -126,6 +143,11 @@ export interface Database {
                 Row: Pitch;
                 Insert: Omit<Pitch, 'id' | 'created_at'>;
                 Update: Partial<Omit<Pitch, 'id' | 'user_id' | 'created_at'>>;
+            };
+            linkedin_content_plans: {
+                Row: LinkedinContentPlan;
+                Insert: Omit<LinkedinContentPlan, 'id' | 'created_at'>;
+                Update: Partial<Omit<LinkedinContentPlan, 'id' | 'user_id' | 'created_at'>>;
             };
             resumes: {
                 Row: Resume;

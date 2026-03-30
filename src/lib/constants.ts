@@ -2,6 +2,7 @@ import type {
     ApplicationCategory,
     ApplicationStatus,
     CertDifficulty,
+    LinkedinContentStatus,
     WebsiteApplicationType,
     WorkMode,
 } from '@/types/database';
@@ -24,6 +25,12 @@ export const WEBSITE_APPLICATION_TYPE_OPTIONS: WebsiteApplicationType[] = [
     'both',
     'nacional',
     'internacional',
+];
+export const LINKEDIN_CONTENT_STATUS_OPTIONS: LinkedinContentStatus[] = [
+    'planned',
+    'scheduled',
+    'posted',
+    'not_done',
 ];
 
 export function toLabel(value: string) {
