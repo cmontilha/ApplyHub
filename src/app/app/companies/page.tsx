@@ -1,21 +1,87 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Edit3, Loader2, Save, Trash2, X } from 'lucide-react';
 import type { Company } from '@/types/database';
 
+const POPULAR_INDUSTRIES = [
+    'Tech',
+    'Banking',
+    'Oil & Gas',
+    'Semiconductors',
+    'Retail',
+    'Telecom',
+    'Healthcare',
+    'Insurance',
+    'Consumer Goods',
+    'Automotive',
+    'Energy',
+    'Chemicals',
+    'Aerospace',
+    'Materials',
+    'Logistics',
+] as const;
+
 type CompanyFormValues = {
     name: string;
     website_url: string;
+    industries: string[];
     contacts: string;
     notes: string;
 };
+
+type IndustryMultiSelectProps = {
+    id: string;
+    values: string[];
+    onChange: (nextValues: string[]) => void;
+    placeholder?: string;
+    disabled?: boolean;
+};
+
+function normalizeIndustry(value: string) {
+    return value.trim().toLocaleLowerCase();
+}
+
+function sanitizeIndustryList(values: string[] | null | undefined) {
+    if (!Array.isArray(values)) return [];
+
+    const seen = new Set<string>();
+    const sanitized: string[] = [];
+
+    for (const value of values) {
+        if (typeof value !== 'string') continue;
+
+        const trimmed = value.trim();
+        if (!trimmed) continue;
+
+        const normalized = normalizeIndustry(trimmed);
+        if (seen.has(normalized)) continue;
+
+        seen.add(normalized);
+        sanitized.push(trimmed);
+    }
+
+    return sanitized;
+}
+
+function toNullableIndustryList(values: string[] | null | undefined) {
+    const sanitized = sanitizeIndustryList(values);
+    return sanitized.length > 0 ? sanitized : null;
+}
+
+function normalizeCompany(company: Company): Company {
+    return {
+        ...company,
+        industries: toNullableIndustryList(company.industries),
+    };
+}
 
 function getInitialFormState(): CompanyFormValues {
     return {
         name: '',
         website_url: '',
+        industries: [],
         contacts: '',
         notes: '',
     };
@@ -51,6 +117,195 @@ async function parseResponse<T>(response: Response): Promise<T> {
     return response.json() as Promise<T>;
 }
 
+function IndustryMultiSelect({
+    id,
+    values,
+    onChange,
+    placeholder = 'Select or add industries...',
+    disabled = false,
+}: IndustryMultiSelectProps) {
+    const [query, setQuery] = useState('');
+    const [open, setOpen] = useState(false);
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
+    const selectedSet = useMemo(
+        () => new Set(values.map(item => normalizeIndustry(item))),
+        [values]
+    );
+
+    const normalizedQuery = normalizeIndustry(query);
+    const trimmedQuery = query.trim();
+
+    const suggestions = useMemo(() => {
+        return POPULAR_INDUSTRIES.filter(item => {
+            const normalizedItem = normalizeIndustry(item);
+            if (selectedSet.has(normalizedItem)) return false;
+            if (!normalizedQuery) return true;
+            return normalizedItem.includes(normalizedQuery);
+        });
+    }, [normalizedQuery, selectedSet]);
+
+    const hasExactSuggestionMatch = useMemo(() => {
+        return POPULAR_INDUSTRIES.some(item => normalizeIndustry(item) === normalizedQuery);
+    }, [normalizedQuery]);
+
+    const canAddCustom =
+        trimmedQuery.length > 0 &&
+        !selectedSet.has(normalizedQuery) &&
+        !hasExactSuggestionMatch;
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handlePointerDownOutside = (event: MouseEvent) => {
+            if (!rootRef.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        window.addEventListener('mousedown', handlePointerDownOutside);
+        return () => window.removeEventListener('mousedown', handlePointerDownOutside);
+    }, [open]);
+
+    function addIndustry(rawValue: string) {
+        const trimmed = rawValue.trim();
+        if (!trimmed) return;
+
+        const normalized = normalizeIndustry(trimmed);
+        if (selectedSet.has(normalized)) {
+            setQuery('');
+            return;
+        }
+
+        onChange([...values, trimmed]);
+        setQuery('');
+        setOpen(true);
+
+        requestAnimationFrame(() => {
+            inputRef.current?.focus();
+        });
+    }
+
+    function removeIndustry(valueToRemove: string) {
+        const normalizedToRemove = normalizeIndustry(valueToRemove);
+        onChange(values.filter(item => normalizeIndustry(item) !== normalizedToRemove));
+    }
+
+    function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+        if (event.key === 'Enter') {
+            if (!trimmedQuery) return;
+
+            event.preventDefault();
+            if (suggestions.length > 0) {
+                addIndustry(suggestions[0]);
+                return;
+            }
+
+            if (canAddCustom) {
+                addIndustry(trimmedQuery);
+            }
+            return;
+        }
+
+        if (event.key === 'Backspace' && !query && values.length > 0) {
+            removeIndustry(values[values.length - 1]);
+            return;
+        }
+
+        if (event.key === 'Escape') {
+            setOpen(false);
+        }
+    }
+
+    return (
+        <div className="relative" ref={rootRef}>
+            <div
+                className={`flex min-h-[42px] w-full flex-wrap items-center gap-2 rounded-xl border bg-slate-950/75 px-3 py-2 transition-all duration-150 ${
+                    open ? 'border-cyan-400 ring-2 ring-cyan-400/30' : 'border-slate-600'
+                } ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
+                onClick={() => {
+                    if (disabled) return;
+                    setOpen(true);
+                    inputRef.current?.focus();
+                }}
+            >
+                {values.map(industry => (
+                    <span
+                        key={industry}
+                        className="inline-flex items-center gap-1 rounded-full border border-cyan-300/35 bg-cyan-500/15 px-2.5 py-1 text-xs font-medium text-cyan-100"
+                    >
+                        {industry}
+                        <button
+                            type="button"
+                            className="rounded-full p-0.5 text-cyan-100/80 hover:bg-cyan-400/20 hover:text-white"
+                            onClick={event => {
+                                event.stopPropagation();
+                                removeIndustry(industry);
+                            }}
+                            aria-label={`Remove ${industry}`}
+                            disabled={disabled}
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </span>
+                ))}
+
+                <input
+                    ref={inputRef}
+                    id={id}
+                    type="text"
+                    className="min-w-[120px] flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 outline-none"
+                    value={query}
+                    onFocus={() => setOpen(true)}
+                    onChange={event => {
+                        setQuery(event.target.value);
+                        setOpen(true);
+                    }}
+                    onKeyDown={onKeyDown}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                />
+            </div>
+
+            {open ? (
+                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-600 bg-slate-950/95 shadow-[0_20px_45px_rgba(2,8,23,0.45)] backdrop-blur">
+                    <div className="max-h-56 overflow-y-auto py-1">
+                        {suggestions.map(industry => (
+                            <button
+                                key={industry}
+                                type="button"
+                                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-cyan-500/15 hover:text-cyan-100"
+                                onMouseDown={event => event.preventDefault()}
+                                onClick={() => addIndustry(industry)}
+                            >
+                                <span>{industry}</span>
+                                <span className="text-xs text-slate-400">Popular</span>
+                            </button>
+                        ))}
+
+                        {canAddCustom ? (
+                            <button
+                                type="button"
+                                className="flex w-full items-center justify-between border-t border-slate-700 px-3 py-2 text-left text-sm text-emerald-200 transition-colors hover:bg-emerald-500/15"
+                                onMouseDown={event => event.preventDefault()}
+                                onClick={() => addIndustry(trimmedQuery)}
+                            >
+                                <span>{`Add "${trimmedQuery}"`}</span>
+                                <span className="text-xs text-emerald-300/80">Custom</span>
+                            </button>
+                        ) : null}
+
+                        {suggestions.length === 0 && !canAddCustom ? (
+                            <p className="px-3 py-2 text-sm text-slate-400">No matching industries.</p>
+                        ) : null}
+                    </div>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 export default function CompaniesPage() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [formValues, setFormValues] = useState<CompanyFormValues>(getInitialFormState);
@@ -68,7 +323,7 @@ export default function CompaniesPage() {
         setError(null);
         try {
             const data = await parseResponse<Company[]>(await fetch('/api/companies'));
-            setCompanies(data);
+            setCompanies(data.map(normalizeCompany));
         } catch (loadError) {
             setError(getErrorMessage(loadError));
         } finally {
@@ -87,12 +342,14 @@ export default function CompaniesPage() {
         setSuccessMessage(null);
 
         try {
-            const created = await parseResponse<Company>(
-                await fetch('/api/companies', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formValues),
-                })
+            const created = normalizeCompany(
+                await parseResponse<Company>(
+                    await fetch('/api/companies', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues),
+                    })
+                )
             );
 
             setCompanies(current => [created, ...current]);
@@ -110,6 +367,7 @@ export default function CompaniesPage() {
         setEditingValues({
             name: company.name,
             website_url: company.website_url ?? '',
+            industries: sanitizeIndustryList(company.industries),
             contacts: company.contacts ?? '',
             notes: company.notes ?? '',
         });
@@ -126,12 +384,14 @@ export default function CompaniesPage() {
         setSuccessMessage(null);
 
         try {
-            const updated = await parseResponse<Company>(
-                await fetch(`/api/companies/${companyId}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(editingValues),
-                })
+            const updated = normalizeCompany(
+                await parseResponse<Company>(
+                    await fetch(`/api/companies/${companyId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(editingValues),
+                    })
+                )
             );
 
             setCompanies(current => current.map(item => (item.id === companyId ? updated : item)));
@@ -244,6 +504,20 @@ export default function CompaniesPage() {
                     </div>
 
                     <div className="md:col-span-2 xl:col-span-4">
+                        <label className="label" htmlFor="industries">
+                            Industry
+                        </label>
+                        <IndustryMultiSelect
+                            id="industries"
+                            values={formValues.industries}
+                            onChange={nextValues =>
+                                setFormValues(current => ({ ...current, industries: nextValues }))
+                            }
+                            placeholder="Click to see suggestions or type to search..."
+                        />
+                    </div>
+
+                    <div className="md:col-span-2 xl:col-span-4">
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                             {submitting ? 'Saving...' : 'Add Company'}
@@ -270,6 +544,7 @@ export default function CompaniesPage() {
                         <tr>
                             <th>Name</th>
                             <th>Website</th>
+                            <th>Industries</th>
                             <th>Contacts</th>
                             <th>Notes</th>
                             <th>Created</th>
@@ -279,7 +554,7 @@ export default function CompaniesPage() {
                     <tbody>
                         {loadingList ? (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-slate-400">
+                                <td colSpan={7} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" /> Loading companies...
                                     </span>
@@ -287,7 +562,7 @@ export default function CompaniesPage() {
                             </tr>
                         ) : companies.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-slate-400">
+                                <td colSpan={7} className="py-12 text-center text-slate-400">
                                     No companies added.
                                 </td>
                             </tr>
@@ -296,6 +571,8 @@ export default function CompaniesPage() {
                                 const rowBusy = savingRowId === company.id || deletingRowId === company.id;
                                 const isEditing = editingId === company.id;
                                 const safeWebsiteUrl = toSafeExternalUrl(company.website_url);
+                                const companyIndustries = sanitizeIndustryList(company.industries);
+
                                 return (
                                     <tr key={company.id}>
                                         <td>
@@ -335,6 +612,37 @@ export default function CompaniesPage() {
                                                 >
                                                     Open
                                                 </Link>
+                                            ) : (
+                                                '-'
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <div className="min-w-[270px]">
+                                                    <IndustryMultiSelect
+                                                        id={`industry-${company.id}`}
+                                                        values={editingValues.industries}
+                                                        onChange={nextValues =>
+                                                            setEditingValues(current => ({
+                                                                ...current,
+                                                                industries: nextValues,
+                                                            }))
+                                                        }
+                                                        placeholder="Select or add..."
+                                                        disabled={rowBusy}
+                                                    />
+                                                </div>
+                                            ) : companyIndustries.length > 0 ? (
+                                                <div className="flex min-w-[240px] flex-wrap gap-1.5">
+                                                    {companyIndustries.map(industry => (
+                                                        <span
+                                                            key={industry}
+                                                            className="inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-100"
+                                                        >
+                                                            {industry}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             ) : (
                                                 '-'
                                             )}

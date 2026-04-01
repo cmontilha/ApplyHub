@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 type CreateCompanyPayload = {
     name?: unknown;
     website_url?: unknown;
+    industries?: unknown;
     contacts?: unknown;
     notes?: unknown;
 };
@@ -30,6 +31,36 @@ function toNullableHttpUrl(value: unknown) {
     } catch {
         return null;
     }
+}
+
+function parseIndustries(value: unknown): { valid: boolean; value: string[] | null } {
+    if (value === undefined || value === null) {
+        return { valid: true, value: null };
+    }
+
+    if (!Array.isArray(value)) {
+        return { valid: false, value: null };
+    }
+
+    const seen = new Set<string>();
+    const sanitized: string[] = [];
+
+    for (const item of value) {
+        if (typeof item !== 'string') {
+            return { valid: false, value: null };
+        }
+
+        const trimmed = item.trim();
+        if (!trimmed) continue;
+
+        const dedupeKey = trimmed.toLocaleLowerCase();
+        if (seen.has(dedupeKey)) continue;
+
+        seen.add(dedupeKey);
+        sanitized.push(trimmed);
+    }
+
+    return { valid: true, value: sanitized.length > 0 ? sanitized : null };
 }
 
 export async function GET() {
@@ -85,12 +116,18 @@ export async function POST(request: Request) {
         }
     }
 
+    const parsedIndustries = parseIndustries(body.industries);
+    if (!parsedIndustries.valid) {
+        return NextResponse.json({ error: 'industries must be an array of strings' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
         .from('companies')
         .insert({
             user_id: user.id,
             name: body.name.trim(),
             website_url: toNullableHttpUrl(body.website_url),
+            industries: parsedIndustries.value,
             contacts: toNullableString(body.contacts),
             notes: toNullableString(body.notes),
         })

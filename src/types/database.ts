@@ -34,6 +34,7 @@ export interface Company {
     user_id: string;
     name: string;
     website_url: string | null;
+    industries: string[] | null;
     contacts: string | null;
     notes: string | null;
     created_at: string;
