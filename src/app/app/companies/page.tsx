@@ -39,8 +39,97 @@ type IndustryMultiSelectProps = {
     disabled?: boolean;
 };
 
+type IndustryTone = {
+    tag: string;
+    button: string;
+    buttonActive: string;
+};
+
+const INDUSTRY_TONES: IndustryTone[] = [
+    {
+        tag: 'border-sky-300/35 bg-sky-500/15 text-sky-100',
+        button: 'border-sky-400/45 bg-sky-500/10 text-sky-100 hover:bg-sky-500/20',
+        buttonActive: 'border-sky-200/80 bg-sky-400/35 text-sky-50 shadow-[0_0_0_1px_rgba(125,211,252,0.4)_inset]',
+    },
+    {
+        tag: 'border-emerald-300/35 bg-emerald-500/15 text-emerald-100',
+        button: 'border-emerald-400/45 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20',
+        buttonActive:
+            'border-emerald-200/80 bg-emerald-400/35 text-emerald-50 shadow-[0_0_0_1px_rgba(110,231,183,0.4)_inset]',
+    },
+    {
+        tag: 'border-amber-300/35 bg-amber-500/15 text-amber-100',
+        button: 'border-amber-400/45 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20',
+        buttonActive: 'border-amber-200/80 bg-amber-400/35 text-amber-50 shadow-[0_0_0_1px_rgba(252,211,77,0.4)_inset]',
+    },
+    {
+        tag: 'border-fuchsia-300/35 bg-fuchsia-500/15 text-fuchsia-100',
+        button: 'border-fuchsia-400/45 bg-fuchsia-500/10 text-fuchsia-100 hover:bg-fuchsia-500/20',
+        buttonActive:
+            'border-fuchsia-200/80 bg-fuchsia-400/35 text-fuchsia-50 shadow-[0_0_0_1px_rgba(244,114,182,0.4)_inset]',
+    },
+    {
+        tag: 'border-indigo-300/35 bg-indigo-500/15 text-indigo-100',
+        button: 'border-indigo-400/45 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20',
+        buttonActive:
+            'border-indigo-200/80 bg-indigo-400/35 text-indigo-50 shadow-[0_0_0_1px_rgba(129,140,248,0.4)_inset]',
+    },
+    {
+        tag: 'border-rose-300/35 bg-rose-500/15 text-rose-100',
+        button: 'border-rose-400/45 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20',
+        buttonActive: 'border-rose-200/80 bg-rose-400/35 text-rose-50 shadow-[0_0_0_1px_rgba(251,113,133,0.4)_inset]',
+    },
+    {
+        tag: 'border-teal-300/35 bg-teal-500/15 text-teal-100',
+        button: 'border-teal-400/45 bg-teal-500/10 text-teal-100 hover:bg-teal-500/20',
+        buttonActive: 'border-teal-200/80 bg-teal-400/35 text-teal-50 shadow-[0_0_0_1px_rgba(45,212,191,0.4)_inset]',
+    },
+    {
+        tag: 'border-orange-300/35 bg-orange-500/15 text-orange-100',
+        button: 'border-orange-400/45 bg-orange-500/10 text-orange-100 hover:bg-orange-500/20',
+        buttonActive:
+            'border-orange-200/80 bg-orange-400/35 text-orange-50 shadow-[0_0_0_1px_rgba(251,146,60,0.4)_inset]',
+    },
+];
+
+const INDUSTRY_TONE_BY_KEY: Record<string, number> = {
+    tech: 0,
+    banking: 1,
+    'oil & gas': 2,
+    semiconductors: 3,
+    retail: 4,
+    telecom: 5,
+    healthcare: 6,
+    insurance: 7,
+    'consumer goods': 0,
+    automotive: 1,
+    energy: 2,
+    chemicals: 3,
+    aerospace: 4,
+    materials: 5,
+    logistics: 6,
+};
+
 function normalizeIndustry(value: string) {
     return value.trim().toLocaleLowerCase();
+}
+
+function getIndustryTone(industry: string): IndustryTone {
+    const key = normalizeIndustry(industry);
+    const mappedIndex = INDUSTRY_TONE_BY_KEY[key];
+
+    if (mappedIndex !== undefined) {
+        return INDUSTRY_TONES[mappedIndex % INDUSTRY_TONES.length];
+    }
+
+    let hash = 0;
+    for (let index = 0; index < key.length; index += 1) {
+        hash = (hash << 5) - hash + key.charCodeAt(index);
+        hash |= 0;
+    }
+
+    const toneIndex = Math.abs(hash) % INDUSTRY_TONES.length;
+    return INDUSTRY_TONES[toneIndex];
 }
 
 function sanitizeIndustryList(values: string[] | null | undefined) {
@@ -317,6 +406,58 @@ export default function CompaniesPage() {
     const [editingValues, setEditingValues] = useState<CompanyFormValues>(getInitialFormState);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+
+    const industryFilterOptions = useMemo(() => {
+        const mapped = new Map<string, { label: string; count: number }>();
+
+        for (const company of companies) {
+            for (const industry of sanitizeIndustryList(company.industries)) {
+                const normalized = normalizeIndustry(industry);
+                const existing = mapped.get(normalized);
+
+                if (existing) {
+                    existing.count += 1;
+                } else {
+                    mapped.set(normalized, { label: industry, count: 1 });
+                }
+            }
+        }
+
+        return Array.from(mapped.entries())
+            .map(([normalized, data]) => ({
+                normalized,
+                label: data.label,
+                count: data.count,
+            }))
+            .sort((first, second) => {
+                if (second.count !== first.count) return second.count - first.count;
+                return first.label.localeCompare(second.label);
+            });
+    }, [companies]);
+
+    const filteredCompanies = useMemo(() => {
+        if (!industryFilter) return companies;
+
+        const normalizedFilter = normalizeIndustry(industryFilter);
+        return companies.filter(company =>
+            sanitizeIndustryList(company.industries).some(
+                industry => normalizeIndustry(industry) === normalizedFilter
+            )
+        );
+    }, [companies, industryFilter]);
+
+    useEffect(() => {
+        if (!industryFilter) return;
+
+        const stillAvailable = industryFilterOptions.some(
+            option => option.normalized === normalizeIndustry(industryFilter)
+        );
+
+        if (!stillAvailable) {
+            setIndustryFilter(null);
+        }
+    }, [industryFilter, industryFilterOptions]);
 
     async function loadCompanies() {
         setLoadingList(true);
@@ -538,6 +679,72 @@ export default function CompaniesPage() {
                 </div>
             ) : null}
 
+            <div className="card p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-100">Filter by industry</h3>
+                        <p className="text-xs text-slate-400">
+                            Click one industry to show only related companies.
+                        </p>
+                    </div>
+                    {industryFilter ? (
+                        <button
+                            type="button"
+                            className="btn-secondary !px-3 !py-1.5 text-xs"
+                            onClick={() => setIndustryFilter(null)}
+                        >
+                            Clear filter
+                        </button>
+                    ) : null}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                            industryFilter === null
+                                ? 'border-cyan-300/80 bg-cyan-400/30 text-cyan-50'
+                                : 'border-slate-600 bg-slate-900/70 text-slate-200 hover:border-cyan-400/40 hover:bg-slate-800'
+                        }`}
+                        onClick={() => setIndustryFilter(null)}
+                    >
+                        All industries
+                        <span className="rounded-full bg-slate-950/45 px-2 py-0.5 text-[11px] text-slate-200">
+                            {companies.length}
+                        </span>
+                    </button>
+
+                    {industryFilterOptions.map(option => {
+                        const tone = getIndustryTone(option.label);
+                        const isActive =
+                            industryFilter !== null &&
+                            normalizeIndustry(industryFilter) === option.normalized;
+
+                        return (
+                            <button
+                                key={option.normalized}
+                                type="button"
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                                    isActive ? tone.buttonActive : tone.button
+                                }`}
+                                onClick={() =>
+                                    setIndustryFilter(current =>
+                                        current && normalizeIndustry(current) === option.normalized
+                                            ? null
+                                            : option.label
+                                    )
+                                }
+                            >
+                                {option.label}
+                                <span className="rounded-full bg-slate-950/45 px-2 py-0.5 text-[11px] text-slate-100">
+                                    {option.count}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             <div className="table-wrapper">
                 <table>
                     <thead>
@@ -560,14 +767,16 @@ export default function CompaniesPage() {
                                     </span>
                                 </td>
                             </tr>
-                        ) : companies.length === 0 ? (
+                        ) : filteredCompanies.length === 0 ? (
                             <tr>
                                 <td colSpan={7} className="py-12 text-center text-slate-400">
-                                    No companies added.
+                                    {industryFilter
+                                        ? `No companies found for industry "${industryFilter}".`
+                                        : 'No companies added.'}
                                 </td>
                             </tr>
                         ) : (
-                            companies.map(company => {
+                            filteredCompanies.map(company => {
                                 const rowBusy = savingRowId === company.id || deletingRowId === company.id;
                                 const isEditing = editingId === company.id;
                                 const safeWebsiteUrl = toSafeExternalUrl(company.website_url);
@@ -637,7 +846,7 @@ export default function CompaniesPage() {
                                                     {companyIndustries.map(industry => (
                                                         <span
                                                             key={industry}
-                                                            className="inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-100"
+                                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${getIndustryTone(industry).tag}`}
                                                         >
                                                             {industry}
                                                         </span>
