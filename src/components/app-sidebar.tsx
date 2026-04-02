@@ -14,6 +14,7 @@ import {
     FileText,
     Globe2,
     GraduationCap,
+    HardDrive,
     Linkedin,
     Link2,
     MessageSquare,
@@ -47,7 +48,10 @@ const NAV_SECTIONS: NavSection[] = [
     },
     {
         title: 'Library',
-        items: [{ href: '/app/links', label: 'Links', icon: Link2 }],
+        items: [
+            { href: '/app/links', label: 'Links', icon: Link2 },
+            { href: '/app/drive', label: 'Drive', icon: HardDrive },
+        ],
     },
     {
         title: 'Career Assets',

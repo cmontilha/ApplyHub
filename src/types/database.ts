@@ -125,6 +125,16 @@ export interface Resume {
     created_at: string;
 }
 
+export interface DriveFile {
+    id: string;
+    user_id: string;
+    file_name: string;
+    storage_path: string;
+    file_size_bytes: number;
+    mime_type: string;
+    created_at: string;
+}
+
 export interface Database {
     public: {
         Tables: {
@@ -172,6 +182,11 @@ export interface Database {
                 Row: Resume;
                 Insert: Omit<Resume, 'id' | 'created_at'>;
                 Update: Partial<Omit<Resume, 'id' | 'user_id' | 'created_at'>>;
+            };
+            drive_files: {
+                Row: DriveFile;
+                Insert: Omit<DriveFile, 'id' | 'created_at'>;
+                Update: Partial<Omit<DriveFile, 'id' | 'user_id' | 'created_at'>>;
             };
         };
         Enums: {
