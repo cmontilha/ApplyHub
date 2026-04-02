@@ -18,6 +18,7 @@ type CreateNetworkingPayload = {
     linkedin_url?: unknown;
     notes?: unknown;
     last_contact_at?: unknown;
+    birthday_date?: unknown;
 };
 
 function toNullableHttpUrl(value: unknown) {
@@ -112,6 +113,17 @@ export async function POST(request: Request) {
         lastContactAt = body.last_contact_at;
     }
 
+    let birthdayDate: string | null = null;
+    if (body.birthday_date !== undefined && body.birthday_date !== null && body.birthday_date !== '') {
+        if (typeof body.birthday_date !== 'string' || !isIsoDate(body.birthday_date)) {
+            return NextResponse.json(
+                { error: 'birthday_date must be a valid date in YYYY-MM-DD format' },
+                { status: 400 }
+            );
+        }
+        birthdayDate = body.birthday_date;
+    }
+
     const nextFollowUpAt = addMonthsToIsoDate(lastContactAt, FOLLOW_UP_INTERVAL_MONTHS);
 
     const { data, error } = await supabase
@@ -128,6 +140,7 @@ export async function POST(request: Request) {
             notes: toNullableString(body.notes),
             last_contact_at: lastContactAt,
             next_follow_up_at: nextFollowUpAt,
+            birthday_date: birthdayDate,
             follow_up_interval_months: FOLLOW_UP_INTERVAL_MONTHS,
         })
         .select('*')

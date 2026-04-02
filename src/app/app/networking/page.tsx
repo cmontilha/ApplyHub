@@ -13,6 +13,7 @@ type NetworkingFormValues = {
     phone: string;
     linkedin_url: string;
     last_contact_at: string;
+    birthday_date: string;
     notes: string;
 };
 
@@ -31,6 +32,7 @@ function getInitialFormState(): NetworkingFormValues {
         phone: '',
         linkedin_url: '',
         last_contact_at: getTodayLocalDate(),
+        birthday_date: '',
         notes: '',
     };
 }
@@ -142,6 +144,7 @@ export default function NetworkingPage() {
             phone: contact.phone ?? '',
             linkedin_url: contact.linkedin_url ?? '',
             last_contact_at: contact.last_contact_at ?? '',
+            birthday_date: contact.birthday_date ?? '',
             notes: contact.notes ?? '',
         });
     }
@@ -316,6 +319,24 @@ export default function NetworkingPage() {
                     </div>
 
                     <div>
+                        <label className="label" htmlFor="birthday_date">
+                            Birthday
+                        </label>
+                        <input
+                            id="birthday_date"
+                            type="date"
+                            className="input"
+                            value={formValues.birthday_date}
+                            onChange={event =>
+                                setFormValues(current => ({
+                                    ...current,
+                                    birthday_date: event.target.value,
+                                }))
+                            }
+                        />
+                    </div>
+
+                    <div>
                         <label className="label" htmlFor="phone">
                             Phone
                         </label>
@@ -402,6 +423,7 @@ export default function NetworkingPage() {
                             <th>Email</th>
                             <th>Phone</th>
                             <th>LinkedIn</th>
+                            <th>Birthday</th>
                             <th>Last Contact</th>
                             <th>Next Follow-up</th>
                             <th>Notes</th>
@@ -411,7 +433,7 @@ export default function NetworkingPage() {
                     <tbody>
                         {loadingList ? (
                             <tr>
-                                <td colSpan={10} className="py-12 text-center text-slate-400">
+                                <td colSpan={11} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" /> Loading contacts...
                                     </span>
@@ -419,7 +441,7 @@ export default function NetworkingPage() {
                             </tr>
                         ) : contacts.length === 0 ? (
                             <tr>
-                                <td colSpan={10} className="py-12 text-center text-slate-400">
+                                <td colSpan={11} className="py-12 text-center text-slate-400">
                                     No contacts added.
                                 </td>
                             </tr>
@@ -536,6 +558,23 @@ export default function NetworkingPage() {
                                                 </Link>
                                             ) : (
                                                 '-'
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isEditing ? (
+                                                <input
+                                                    className="input"
+                                                    type="date"
+                                                    value={editingValues.birthday_date}
+                                                    onChange={event =>
+                                                        setEditingValues(current => ({
+                                                            ...current,
+                                                            birthday_date: event.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            ) : (
+                                                formatDate(contact.birthday_date)
                                             )}
                                         </td>
                                         <td>

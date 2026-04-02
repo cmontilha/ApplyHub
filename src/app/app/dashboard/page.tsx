@@ -25,6 +25,16 @@ type DashboardFollowUpItem = {
     is_overdue: boolean;
 };
 
+type DashboardBirthdayItem = {
+    id: string;
+    name: string;
+    company: string | null;
+    role_title: string | null;
+    birthday_date: string;
+    birthday_day: number;
+    is_today: boolean;
+};
+
 type DashboardWebsiteItem = {
     id: string;
     name: string;
@@ -77,6 +87,7 @@ type DashboardData = {
     companies: DashboardCompanyItem[];
     pitches: DashboardPitchItem[];
     networking_followups: DashboardFollowUpItem[];
+    birthdays_this_month: DashboardBirthdayItem[];
 };
 
 type ChartView = 'monthly' | 'yearly';
@@ -128,6 +139,14 @@ function formatIsoDate(isoDate: string | null) {
     if (!isoDate) return '-';
     const [year, month, day] = isoDate.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString();
+}
+
+function formatBirthdayMonthDay(isoDate: string) {
+    const [year, month, day] = isoDate.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+    });
 }
 
 function toSafeExternalUrl(value: string | null) {
@@ -423,6 +442,14 @@ export default function DashboardPage() {
             text: 'No overdue follow-ups. Your networking cadence is up to date.',
         };
     }, [data]);
+
+    const currentMonthLabel = useMemo(
+        () =>
+            new Intl.DateTimeFormat(undefined, {
+                month: 'long',
+            }).format(new Date()),
+        []
+    );
 
     const watchListApplications = useMemo(() => {
         if (!data) return [];
@@ -1714,6 +1741,52 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         ) : null}
+                    </div>
+                )}
+            </div>
+
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Birthdays This Month</h3>
+                        <p className="text-sm text-slate-300">
+                            Contacts celebrating in {currentMonthLabel}.
+                        </p>
+                    </div>
+                    <span className="badge border border-rose-400/40 bg-rose-500/15 text-rose-200">
+                        {data.birthdays_this_month.length} this month
+                    </span>
+                </div>
+
+                {data.birthdays_this_month.length === 0 ? (
+                    <p className="text-sm text-slate-400">No birthdays registered for this month.</p>
+                ) : (
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {data.birthdays_this_month.map(item => (
+                            <article
+                                key={item.id}
+                                className="rounded-xl border border-slate-700/70 bg-slate-900/70 p-3"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-100">{item.name}</p>
+                                        <p className="text-xs text-slate-400">
+                                            {[item.company, item.role_title].filter(Boolean).join(' • ') || '-'}
+                                        </p>
+                                    </div>
+
+                                    <span
+                                        className={`badge ${
+                                            item.is_today
+                                                ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
+                                                : 'border border-rose-500/40 bg-rose-500/15 text-rose-200'
+                                        }`}
+                                    >
+                                        {item.is_today ? 'Today' : formatBirthdayMonthDay(item.birthday_date)}
+                                    </span>
+                                </div>
+                            </article>
+                        ))}
                     </div>
                 )}
             </div>

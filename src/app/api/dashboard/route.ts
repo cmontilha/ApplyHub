@@ -23,6 +23,16 @@ type DashboardFollowUpItem = {
     is_overdue: boolean;
 };
 
+type DashboardBirthdayItem = {
+    id: string;
+    name: string;
+    company: string | null;
+    role_title: string | null;
+    birthday_date: string;
+    birthday_day: number;
+    is_today: boolean;
+};
+
 type DashboardApplicationItem = {
     id: string;
     applied_date: string;
@@ -79,6 +89,11 @@ function dateDiffInDays(fromIsoDate: string, toIsoDate: string) {
     const fromUtc = Date.UTC(fromYear, fromMonth - 1, fromDay);
     const toUtc = Date.UTC(toYear, toMonth - 1, toDay);
     return Math.round((toUtc - fromUtc) / 86400000);
+}
+
+function getMonthDayParts(isoDate: string) {
+    const [, month, day] = isoDate.split('-').map(Number);
+    return { month, day };
 }
 
 export async function GET() {
@@ -149,6 +164,7 @@ export async function GET() {
     }
 
     const todayIsoDate = getTodayIsoDate();
+    const { month: currentMonth, day: currentDay } = getMonthDayParts(todayIsoDate);
     const networking_followups: DashboardFollowUpItem[] = (followUpsData ?? [])
         .filter(item => typeof item.next_follow_up_at === 'string')
         .map(item => {
@@ -164,6 +180,36 @@ export async function GET() {
                 is_overdue: daysUntilFollowUp < 0,
             };
         });
+
+    const { data: birthdaysData, error: birthdaysError } = await supabase
+        .from('networking_contacts')
+        .select('id, name, company, role_title, birthday_date')
+        .not('birthday_date', 'is', null)
+        .order('birthday_date', { ascending: true });
+
+    if (birthdaysError) {
+        return NextResponse.json({ error: birthdaysError.message }, { status: 500 });
+    }
+
+    const birthdays_this_month: DashboardBirthdayItem[] = (birthdaysData ?? [])
+        .filter(item => typeof item.birthday_date === 'string')
+        .map(item => {
+            const { month, day } = getMonthDayParts(item.birthday_date as string);
+            return {
+                id: item.id,
+                name: item.name,
+                company: item.company,
+                role_title: item.role_title,
+                birthday_date: item.birthday_date as string,
+                birthday_day: day,
+                is_today: month === currentMonth && day === currentDay,
+            };
+        })
+        .filter(item => {
+            const { month } = getMonthDayParts(item.birthday_date);
+            return month === currentMonth;
+        })
+        .sort((first, second) => first.birthday_day - second.birthday_day || first.name.localeCompare(second.name));
 
     const { data: websitesData, error: websitesError } = await supabase
         .from('websites_to_apply')
@@ -208,5 +254,6 @@ export async function GET() {
         pitches,
         due_follow_ups: networking_followups.filter(item => item.days_until_follow_up <= 0).length,
         networking_followups,
+        birthdays_this_month,
     });
 }

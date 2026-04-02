@@ -65,6 +65,7 @@ export interface NetworkingContact {
     notes: string | null;
     last_contact_at: string | null;
     next_follow_up_at: string | null;
+    birthday_date: string | null;
     follow_up_interval_months: number;
     created_at: string;
 }

@@ -17,6 +17,7 @@ type UpdateNetworkingPayload = {
     linkedin_url?: unknown;
     notes?: unknown;
     last_contact_at?: unknown;
+    birthday_date?: unknown;
 };
 
 function toNullableHttpUrl(value: unknown) {
@@ -68,6 +69,7 @@ export async function PATCH(
         notes?: string | null;
         last_contact_at?: string | null;
         next_follow_up_at?: string | null;
+        birthday_date?: string | null;
     } = {};
 
     if (body.name !== undefined) {
@@ -129,6 +131,19 @@ export async function PATCH(
 
     if (body.notes !== undefined) {
         updates.notes = toNullableString(body.notes);
+    }
+
+    if (body.birthday_date !== undefined) {
+        if (body.birthday_date === null || body.birthday_date === '') {
+            updates.birthday_date = null;
+        } else if (typeof body.birthday_date !== 'string' || !isIsoDate(body.birthday_date)) {
+            return NextResponse.json(
+                { error: 'birthday_date must be a valid date in YYYY-MM-DD format' },
+                { status: 400 }
+            );
+        } else {
+            updates.birthday_date = body.birthday_date;
+        }
     }
 
     if (contactFieldsChanged) {
