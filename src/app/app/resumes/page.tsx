@@ -1,7 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
-import { ExternalLink, FileText, Loader2, Trash2, Upload } from 'lucide-react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ExternalLink, FileText, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
 
 type ResumeItem = {
     id: string;
@@ -38,19 +38,50 @@ function formatFileSize(bytes: number) {
     return `${(kb / 1024).toFixed(2)} MB`;
 }
 
+function toSafeExternalUrl(value: string | null) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
+function toPdfPreviewUrl(url: string) {
+    return `${url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
+}
+
 export default function ResumesPage() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const [resumes, setResumes] = useState<ResumeItem[]>([]);
     const [loadingList, setLoadingList] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [refreshingLinks, setRefreshingLinks] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    async function loadResumes() {
-        setLoadingList(true);
+    const resumeCountLabel = useMemo(() => {
+        if (resumes.length === 0) return 'No resumes uploaded yet.';
+        if (resumes.length === 1) return '1 resume uploaded.';
+        return `${resumes.length} resumes uploaded.`;
+    }, [resumes.length]);
+
+    async function loadResumes(showLoader = true) {
+        if (showLoader) {
+            setLoadingList(true);
+        } else {
+            setRefreshingLinks(true);
+        }
         setError(null);
 
         try {
@@ -59,7 +90,11 @@ export default function ResumesPage() {
         } catch (loadError) {
             setError(getErrorMessage(loadError));
         } finally {
-            setLoadingList(false);
+            if (showLoader) {
+                setLoadingList(false);
+            } else {
+                setRefreshingLinks(false);
+            }
         }
     }
 
@@ -164,7 +199,11 @@ export default function ResumesPage() {
 
                     <div className="flex items-end">
                         <button type="submit" className="btn-primary" disabled={uploading}>
-                            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            {uploading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Upload className="h-4 w-4" />
+                            )}
                             {uploading ? 'Uploading...' : 'Upload PDF'}
                         </button>
                     </div>
@@ -183,51 +222,93 @@ export default function ResumesPage() {
                 </div>
             ) : null}
 
-            <div className="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Size</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loadingList ? (
-                            <tr>
-                                <td colSpan={4} className="py-12 text-center text-slate-400">
-                                    <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Loading resumes...
-                                    </span>
-                                </td>
-                            </tr>
-                        ) : resumes.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="py-12 text-center text-slate-400">
-                                    No resumes uploaded yet.
-                                </td>
-                            </tr>
-                        ) : (
-                            resumes.map(item => (
-                                <tr key={item.id}>
-                                    <td>
-                                        <span className="inline-flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-cyan-300" />
-                                            {item.file_name}
-                                        </span>
-                                    </td>
-                                    <td>{formatFileSize(item.file_size_bytes)}</td>
-                                    <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        <div className="flex items-center gap-2">
-                                            {item.download_url ? (
+            <div className="card p-4">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Saved Resumes</h3>
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs text-slate-400">{resumeCountLabel}</p>
+                        {resumes.length > 0 ? (
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                disabled={refreshingLinks}
+                                onClick={() => void loadResumes(false)}
+                            >
+                                {refreshingLinks ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <RefreshCw className="h-4 w-4" />
+                                )}
+                                {refreshingLinks ? 'Refreshing...' : 'Refresh Links'}
+                            </button>
+                        ) : null}
+                    </div>
+                </div>
+
+                {loadingList ? (
+                    <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
+                        <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading resumes...
+                        </span>
+                    </div>
+                ) : resumes.length === 0 ? (
+                    <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
+                        No resumes uploaded yet.
+                    </div>
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {resumes.map(item => {
+                            const safeDownloadUrl = toSafeExternalUrl(item.download_url);
+                            const previewUrl = safeDownloadUrl ? toPdfPreviewUrl(safeDownloadUrl) : null;
+                            const isDeleting = deletingId === item.id;
+
+                            return (
+                                <article
+                                    key={item.id}
+                                    className="overflow-hidden rounded-2xl border border-slate-700/70 bg-gradient-to-br from-slate-950/95 via-slate-900/95 to-cyan-950/25 shadow-[0_18px_36px_rgba(2,6,23,0.45)]"
+                                >
+                                    <div className="relative h-36 border-b border-slate-700/70 bg-slate-950/80">
+                                        {previewUrl ? (
+                                            <iframe
+                                                src={previewUrl}
+                                                title={`${item.file_name} preview`}
+                                                className="h-full w-full border-0 pointer-events-none"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+                                                <FileText className="h-7 w-7 text-slate-400" />
+                                            </div>
+                                        )}
+
+                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/15 to-transparent" />
+                                        <p className="pointer-events-none absolute bottom-2 left-3 text-[11px] font-medium uppercase tracking-wide text-cyan-100/90">
+                                            PDF Preview
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-3 p-4">
+                                        <div>
+                                            <p className="line-clamp-2 text-base font-semibold text-slate-100">
+                                                {item.file_name}
+                                            </p>
+                                            <p className="mt-1 text-xs text-slate-400">
+                                                {formatFileSize(item.file_size_bytes)}
+                                            </p>
+                                        </div>
+
+                                        <p className="text-xs text-slate-400">
+                                            Uploaded on {new Date(item.created_at).toLocaleDateString()}
+                                        </p>
+
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {safeDownloadUrl ? (
                                                 <a
-                                                    href={item.download_url}
+                                                    href={safeDownloadUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="btn-secondary"
+                                                    className="btn-primary"
                                                 >
                                                     <ExternalLink className="h-4 w-4" />
                                                     Open
@@ -236,8 +317,9 @@ export default function ResumesPage() {
                                                 <button
                                                     type="button"
                                                     className="btn-secondary"
-                                                    onClick={() => void loadResumes()}
+                                                    onClick={() => void loadResumes(false)}
                                                 >
+                                                    <RefreshCw className="h-4 w-4" />
                                                     Refresh Link
                                                 </button>
                                             )}
@@ -245,10 +327,10 @@ export default function ResumesPage() {
                                             <button
                                                 type="button"
                                                 className="btn-danger"
-                                                disabled={deletingId === item.id}
+                                                disabled={isDeleting}
                                                 onClick={() => handleDelete(item.id)}
                                             >
-                                                {deletingId === item.id ? (
+                                                {isDeleting ? (
                                                     <Loader2 className="h-4 w-4 animate-spin" />
                                                 ) : (
                                                     <Trash2 className="h-4 w-4" />
@@ -256,12 +338,12 @@ export default function ResumesPage() {
                                                 Delete
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                    </div>
+                                </article>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </section>
     );
