@@ -86,6 +86,18 @@ export interface Pitch {
     created_at: string;
 }
 
+export interface SavedLink {
+    id: string;
+    user_id: string;
+    url: string;
+    title: string;
+    notes: string | null;
+    description: string | null;
+    preview_image_url: string | null;
+    site_name: string | null;
+    created_at: string;
+}
+
 export interface LinkedinContentPlan {
     id: string;
     user_id: string;
@@ -144,6 +156,11 @@ export interface Database {
                 Row: Pitch;
                 Insert: Omit<Pitch, 'id' | 'created_at'>;
                 Update: Partial<Omit<Pitch, 'id' | 'user_id' | 'created_at'>>;
+            };
+            saved_links: {
+                Row: SavedLink;
+                Insert: Omit<SavedLink, 'id' | 'created_at'>;
+                Update: Partial<Omit<SavedLink, 'id' | 'user_id' | 'created_at'>>;
             };
             linkedin_content_plans: {
                 Row: LinkedinContentPlan;
