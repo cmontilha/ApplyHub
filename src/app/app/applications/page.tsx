@@ -134,6 +134,26 @@ function getPaginationItems(currentPage: number, totalPages: number): Pagination
     return items;
 }
 
+function getUniqueRecentValues(values: Array<string | null | undefined>, limit = 20) {
+    const seen = new Set<string>();
+    const uniqueValues: string[] = [];
+
+    for (const value of values) {
+        const trimmed = value?.trim();
+        if (!trimmed) continue;
+
+        const normalized = trimmed.toLowerCase();
+        if (seen.has(normalized)) continue;
+
+        seen.add(normalized);
+        uniqueValues.push(trimmed);
+
+        if (uniqueValues.length >= limit) break;
+    }
+
+    return uniqueValues;
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -353,6 +373,16 @@ export default function ApplicationsPage() {
         return `Showing ${from}-${to} of ${filteredApplications.length}`;
     }, [applicationsPage, filteredApplications.length, totalApplicationsPages]);
 
+    const locationHistory = useMemo(
+        () => getUniqueRecentValues(applications.map(application => application.location)),
+        [applications]
+    );
+
+    const notesHistory = useMemo(
+        () => getUniqueRecentValues(applications.map(application => application.notes)),
+        [applications]
+    );
+
     return (
         <section className="space-y-6">
             <header>
@@ -458,6 +488,7 @@ export default function ApplicationsPage() {
                             id="location"
                             type="text"
                             className="input"
+                            list="applications-location-history"
                             placeholder="Sao Paulo - SP"
                             value={formValues.location}
                             onChange={event =>
@@ -561,6 +592,7 @@ export default function ApplicationsPage() {
                             id="notes"
                             type="text"
                             className="input"
+                            list="applications-notes-history"
                             placeholder="Optional notes"
                             value={formValues.notes}
                             onChange={event =>
@@ -571,6 +603,18 @@ export default function ApplicationsPage() {
                             }
                         />
                     </div>
+
+                    <datalist id="applications-location-history">
+                        {locationHistory.map(location => (
+                            <option key={location} value={location} />
+                        ))}
+                    </datalist>
+
+                    <datalist id="applications-notes-history">
+                        {notesHistory.map(note => (
+                            <option key={note} value={note} />
+                        ))}
+                    </datalist>
 
                     <div className="md:col-span-2 xl:col-span-4">
                         <button className="btn-primary" type="submit" disabled={submitting}>
@@ -743,6 +787,7 @@ export default function ApplicationsPage() {
                                                 <input
                                                     type="text"
                                                     className="input min-w-[170px]"
+                                                    list="applications-location-history"
                                                     value={editingValues.location}
                                                     disabled={rowBusy}
                                                     onChange={event =>
@@ -887,6 +932,7 @@ export default function ApplicationsPage() {
                                                 <input
                                                     type="text"
                                                     className="input min-w-[340px]"
+                                                    list="applications-notes-history"
                                                     value={editingValues.notes}
                                                     disabled={rowBusy}
                                                     onChange={event =>
