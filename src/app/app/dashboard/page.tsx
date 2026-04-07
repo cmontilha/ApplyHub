@@ -14,7 +14,7 @@ import { CheckCircle2, Edit3, Loader2, Save, Trash2, X } from 'lucide-react';
 import { toLabel } from '@/lib/constants';
 import type { ApplicationCategory, ApplicationStatus, WorkMode } from '@/types/database';
 
-type DashboardFollowUpItem = {
+type PainelFollowUpItem = {
     id: string;
     name: string;
     company: string | null;
@@ -25,7 +25,7 @@ type DashboardFollowUpItem = {
     is_overdue: boolean;
 };
 
-type DashboardBirthdayItem = {
+type PainelBirthdayItem = {
     id: string;
     name: string;
     company: string | null;
@@ -35,7 +35,7 @@ type DashboardBirthdayItem = {
     is_today: boolean;
 };
 
-type DashboardWebsiteItem = {
+type PainelWebsiteItem = {
     id: string;
     name: string;
     website_url: string;
@@ -43,7 +43,7 @@ type DashboardWebsiteItem = {
     created_at: string;
 };
 
-type DashboardCompanyItem = {
+type PainelCompanyItem = {
     id: string;
     name: string;
     website_url: string | null;
@@ -52,21 +52,21 @@ type DashboardCompanyItem = {
     created_at: string;
 };
 
-type DashboardCompanyFormValues = {
+type PainelCompanyFormValues = {
     name: string;
     website_url: string;
     contacts: string;
     notes: string;
 };
 
-type DashboardPitchItem = {
+type PainelPitchItem = {
     id: string;
     name: string;
     pitch: string;
     created_at: string;
 };
 
-type DashboardData = {
+type PainelData = {
     total_applications: number;
     total_interviews: number;
     total_rejected: number;
@@ -82,18 +82,18 @@ type DashboardData = {
         year: string;
         count: number;
     }>;
-    applications_list: DashboardApplicationItem[];
-    websites_to_apply: DashboardWebsiteItem[];
-    companies: DashboardCompanyItem[];
-    pitches: DashboardPitchItem[];
-    networking_followups: DashboardFollowUpItem[];
-    birthdays_this_month: DashboardBirthdayItem[];
+    applications_list: PainelApplicationItem[];
+    websites_to_apply: PainelWebsiteItem[];
+    companies: PainelCompanyItem[];
+    pitches: PainelPitchItem[];
+    networking_followups: PainelFollowUpItem[];
+    birthdays_this_month: PainelBirthdayItem[];
 };
 
 type ChartView = 'monthly' | 'yearly';
 type PaginationItem = number | 'ellipsis';
 
-type DashboardApplicationItem = {
+type PainelApplicationItem = {
     id: string;
     applied_date: string;
     company: string;
@@ -113,7 +113,7 @@ const WEBSITES_PER_PAGE = 5;
 const COMPANIES_PER_PAGE = 3;
 const FOLLOW_UPS_PER_PAGE = 5;
 
-function getInitialCompanyFormState(): DashboardCompanyFormValues {
+function getInitialCompanyFormState(): PainelCompanyFormValues {
     return {
         name: '',
         website_url: '',
@@ -124,13 +124,13 @@ function getInitialCompanyFormState(): DashboardCompanyFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
     return response.json() as Promise<T>;
 }
@@ -208,8 +208,8 @@ function getPaginationItems(currentPage: number, totalPages: number): Pagination
     return items;
 }
 
-export default function DashboardPage() {
-    const [data, setData] = useState<DashboardData | null>(null);
+export default function PainelPage() {
+    const [data, setData] = useState<PainelData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [followUpSubmittingId, setFollowUpSubmittingId] = useState<string | null>(null);
@@ -221,22 +221,22 @@ export default function DashboardPage() {
     const [websitesPage, setWebsitesPage] = useState(1);
     const [companiesPage, setCompaniesPage] = useState(1);
     const [followUpsPage, setFollowUpsPage] = useState(1);
-    const [activePitch, setActivePitch] = useState<DashboardPitchItem | null>(null);
-    const [isPitchModalOpen, setIsPitchModalOpen] = useState(false);
+    const [activePitch, setActivePitch] = useState<PainelPitchItem | null>(null);
+    const [isPitchModalAbrir, setIsPitchModalAbrir] = useState(false);
     const [deletingApplicationId, setDeletingApplicationId] = useState<string | null>(null);
     const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
-    const [editingCompanyValues, setEditingCompanyValues] = useState<DashboardCompanyFormValues>(
+    const [editingCompanyValues, setEditingCompanyValues] = useState<PainelCompanyFormValues>(
         getInitialCompanyFormState
     );
     const [savingCompanyId, setSavingCompanyId] = useState<string | null>(null);
     const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(null);
 
-    async function loadDashboard() {
+    async function loadPainel() {
         setLoading(true);
         setError(null);
 
         try {
-            const payload = await parseResponse<DashboardData>(await fetch('/api/dashboard'));
+            const payload = await parseResponse<PainelData>(await fetch('/api/dashboard'));
             setData(payload);
         } catch (loadError) {
             setError(getErrorMessage(loadError));
@@ -246,7 +246,7 @@ export default function DashboardPage() {
     }
 
     useEffect(() => {
-        void loadDashboard();
+        void loadPainel();
     }, []);
 
     useEffect(() => {
@@ -270,7 +270,7 @@ export default function DashboardPage() {
 
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                setIsPitchModalOpen(false);
+                setIsPitchModalAbrir(false);
             }
         };
 
@@ -289,10 +289,10 @@ export default function DashboardPage() {
     }, [activePitch]);
 
     useEffect(() => {
-        if (isPitchModalOpen || !activePitch) return;
+        if (isPitchModalAbrir || !activePitch) return;
         const timer = window.setTimeout(() => setActivePitch(null), 180);
         return () => window.clearTimeout(timer);
-    }, [activePitch, isPitchModalOpen]);
+    }, [activePitch, isPitchModalAbrir]);
 
     const referralRatio = useMemo(() => {
         if (!data || data.total_applications === 0) return '0%';
@@ -303,25 +303,25 @@ export default function DashboardPage() {
     const chartMeta = useMemo(() => {
         if (!data) {
             return {
-                title: 'Applications per Month',
-                subtitle: 'Grouped by applied date.',
+                title: 'Candidaturas por mes',
+                subtitle: 'Agrupado por data de candidatura.',
                 xKey: 'month' as const,
-                data: [] as DashboardData['applications_per_month'],
+                data: [] as PainelData['applications_per_month'],
             };
         }
 
         if (chartView === 'yearly') {
             return {
-                title: 'Applications per Year',
-                subtitle: 'Grouped by year.',
+                title: 'Candidaturas por ano',
+                subtitle: 'Agrupado por ano.',
                 xKey: 'year' as const,
                 data: data.applications_per_year,
             };
         }
 
         return {
-            title: 'Applications per Month',
-            subtitle: 'Grouped by month and year.',
+            title: 'Candidaturas por mes',
+            subtitle: 'Agrupado por mes e ano.',
             xKey: 'month' as const,
             data: data.applications_per_month,
         };
@@ -344,40 +344,40 @@ export default function DashboardPage() {
 
         return [
             {
-                label: 'Total Applications',
+                label: 'Total de candidaturas',
                 value: metrics.total_applications,
                 toneClass: defaultToneClass,
                 valueClass: 'text-slate-100',
             },
             {
-                label: 'Watch List Applications',
+                label: 'Candidaturas em observacao',
                 value: watchListCount,
                 toneClass: defaultToneClass,
                 valueClass: 'text-slate-100',
             },
             {
-                label: 'Total Interviews',
+                label: 'Total de entrevistas',
                 value: metrics.total_interviews,
                 toneClass:
                     'border-amber-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-amber-950/50',
                 valueClass: 'text-amber-200',
             },
             {
-                label: 'Total Rejected',
+                label: 'Total de recusas',
                 value: metrics.total_rejected,
                 toneClass:
                     'border-red-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-red-950/50',
                 valueClass: 'text-red-200',
             },
             {
-                label: 'Total Offers',
+                label: 'Total de ofertas',
                 value: metrics.total_offers,
                 toneClass:
                     'border-emerald-300/30 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-emerald-950/50',
                 valueClass: 'text-emerald-200',
             },
             {
-                label: 'Referral Ratio',
+                label: 'Taxa de indicacao',
                 value: referralRatio,
                 toneClass: defaultToneClass,
                 valueClass: 'text-slate-100',
@@ -406,12 +406,12 @@ export default function DashboardPage() {
         if (!data) {
             return {
                 className: 'border-slate-700/70 bg-slate-900/70 text-slate-200',
-                text: 'No follow-up data available.',
+                text: 'Nenhum dado de follow-up disponivel.',
             };
         }
 
         const overdueCount = data.networking_followups.filter(item => item.days_until_follow_up < 0).length;
-        const dueTodayCount = data.networking_followups.filter(item => item.days_until_follow_up === 0).length;
+        const dueHojeCount = data.networking_followups.filter(item => item.days_until_follow_up === 0).length;
         const dueSoonCount = data.networking_followups.filter(
             item => item.days_until_follow_up > 0 && item.days_until_follow_up <= 7
         ).length;
@@ -419,27 +419,27 @@ export default function DashboardPage() {
         if (overdueCount > 0) {
             return {
                 className: 'border-red-500/40 bg-red-500/15 text-red-200',
-                text: `${overdueCount} follow-up${overdueCount > 1 ? 's are' : ' is'} overdue.`,
+                text: `${overdueCount} follow-up${overdueCount > 1 ? 's atrasados' : ' atrasado'}.`,
             };
         }
 
-        if (dueTodayCount > 0) {
+        if (dueHojeCount > 0) {
             return {
                 className: 'border-amber-500/40 bg-amber-500/15 text-amber-200',
-                text: `${dueTodayCount} follow-up${dueTodayCount > 1 ? 's are' : ' is'} due today.`,
+                text: `${dueHojeCount} follow-up${dueHojeCount > 1 ? 's vencem' : ' vence'} hoje.`,
             };
         }
 
         if (dueSoonCount > 0) {
             return {
                 className: 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200',
-                text: `${dueSoonCount} follow-up${dueSoonCount > 1 ? 's are' : ' is'} due in the next 7 days.`,
+                text: `${dueSoonCount} follow-up${dueSoonCount > 1 ? 's vencem' : ' vence'} nos proximos 7 dias.`,
             };
         }
 
         return {
             className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200',
-            text: 'No overdue follow-ups. Your networking cadence is up to date.',
+            text: 'Nao ha follow-ups atrasados. Seu networking esta em dia.',
         };
     }, [data]);
 
@@ -486,14 +486,14 @@ export default function DashboardPage() {
 
     const watchListPageSummary = useMemo(() => {
         if (watchListApplications.length === 0) {
-            return 'Showing 0 of 0';
+            return 'Exibindo 0 de 0';
         }
 
         const safePage = Math.min(watchListPage, totalWatchListPages);
         const startIndex = (safePage - 1) * WATCH_LIST_PER_PAGE;
         const from = startIndex + 1;
         const to = Math.min(startIndex + WATCH_LIST_PER_PAGE, watchListApplications.length);
-        return `Showing ${from}-${to} of ${watchListApplications.length}`;
+        return `Exibindo ${from}-${to} de ${watchListApplications.length}`;
     }, [watchListApplications.length, watchListPage, totalWatchListPages]);
 
     const watchListMetrics = useMemo(() => {
@@ -545,14 +545,14 @@ export default function DashboardPage() {
 
     const applicationsPageSummary = useMemo(() => {
         if (filteredApplications.length === 0) {
-            return 'Showing 0 of 0';
+            return 'Exibindo 0 de 0';
         }
 
         const safePage = Math.min(applicationsPage, totalApplicationsPages);
         const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
         const from = startIndex + 1;
         const to = Math.min(startIndex + APPLICATIONS_PER_PAGE, filteredApplications.length);
-        return `Showing ${from}-${to} of ${filteredApplications.length}`;
+        return `Exibindo ${from}-${to} de ${filteredApplications.length}`;
     }, [applicationsPage, filteredApplications.length, totalApplicationsPages]);
 
     const totalWebsitesPages = useMemo(() => {
@@ -579,14 +579,14 @@ export default function DashboardPage() {
 
     const websitesPageSummary = useMemo(() => {
         if (!data || data.websites_to_apply.length === 0) {
-            return 'Showing 0 of 0';
+            return 'Exibindo 0 de 0';
         }
 
         const safePage = Math.min(websitesPage, totalWebsitesPages);
         const startIndex = (safePage - 1) * WEBSITES_PER_PAGE;
         const from = startIndex + 1;
         const to = Math.min(startIndex + WEBSITES_PER_PAGE, data.websites_to_apply.length);
-        return `Showing ${from}-${to} of ${data.websites_to_apply.length}`;
+        return `Exibindo ${from}-${to} de ${data.websites_to_apply.length}`;
     }, [data, websitesPage, totalWebsitesPages]);
 
     const filteredCompanies = useMemo(() => {
@@ -620,14 +620,14 @@ export default function DashboardPage() {
 
     const companiesPageSummary = useMemo(() => {
         if (filteredCompanies.length === 0) {
-            return 'Showing 0 of 0';
+            return 'Exibindo 0 de 0';
         }
 
         const safePage = Math.min(companiesPage, totalCompaniesPages);
         const startIndex = (safePage - 1) * COMPANIES_PER_PAGE;
         const from = startIndex + 1;
         const to = Math.min(startIndex + COMPANIES_PER_PAGE, filteredCompanies.length);
-        return `Showing ${from}-${to} of ${filteredCompanies.length}`;
+        return `Exibindo ${from}-${to} de ${filteredCompanies.length}`;
     }, [companiesPage, filteredCompanies.length, totalCompaniesPages]);
 
     const totalFollowUpsPages = useMemo(() => {
@@ -654,14 +654,14 @@ export default function DashboardPage() {
 
     const followUpsPageSummary = useMemo(() => {
         if (!data || data.networking_followups.length === 0) {
-            return 'Showing 0 of 0';
+            return 'Exibindo 0 de 0';
         }
 
         const safePage = Math.min(followUpsPage, totalFollowUpsPages);
         const startIndex = (safePage - 1) * FOLLOW_UPS_PER_PAGE;
         const from = startIndex + 1;
         const to = Math.min(startIndex + FOLLOW_UPS_PER_PAGE, data.networking_followups.length);
-        return `Showing ${from}-${to} of ${data.networking_followups.length}`;
+        return `Exibindo ${from}-${to} de ${data.networking_followups.length}`;
     }, [data, followUpsPage, totalFollowUpsPages]);
 
     async function handleMarkFollowUpDone(contactId: string) {
@@ -673,7 +673,7 @@ export default function DashboardPage() {
                     method: 'POST',
                 })
             );
-            await loadDashboard();
+            await loadPainel();
         } catch (followUpError) {
             setError(getErrorMessage(followUpError));
         } finally {
@@ -681,8 +681,8 @@ export default function DashboardPage() {
         }
     }
 
-    async function handleDeleteDashboardApplication(applicationId: string) {
-        const confirmed = window.confirm('Delete this application?');
+    async function handleDeletePainelApplication(applicationId: string) {
+        const confirmed = window.confirm('Excluir esta candidatura?');
         if (!confirmed) return;
 
         setDeletingApplicationId(applicationId);
@@ -695,10 +695,10 @@ export default function DashboardPage() {
 
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
-            await loadDashboard();
+            await loadPainel();
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -706,7 +706,7 @@ export default function DashboardPage() {
         }
     }
 
-    function startEditCompany(company: DashboardCompanyItem) {
+    function startEditCompany(company: PainelCompanyItem) {
         setEditingCompanyId(company.id);
         setEditingCompanyValues({
             name: company.name,
@@ -716,17 +716,17 @@ export default function DashboardPage() {
         });
     }
 
-    function cancelEditCompany() {
+    function cancelEditarCompany() {
         setEditingCompanyId(null);
         setEditingCompanyValues(getInitialCompanyFormState());
     }
 
-    async function saveEditCompany(companyId: string) {
+    async function saveEditarCompany(companyId: string) {
         setSavingCompanyId(companyId);
         setError(null);
 
         try {
-            const updated = await parseResponse<DashboardCompanyItem>(
+            const updated = await parseResponse<PainelCompanyItem>(
                 await fetch(`/api/companies/${companyId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -744,7 +744,7 @@ export default function DashboardPage() {
                       }
                     : current
             );
-            cancelEditCompany();
+            cancelEditarCompany();
         } catch (saveError) {
             setError(getErrorMessage(saveError));
         } finally {
@@ -753,7 +753,7 @@ export default function DashboardPage() {
     }
 
     async function handleDeleteCompany(companyId: string) {
-        const confirmed = window.confirm('Delete this company?');
+        const confirmed = window.confirm('Excluir esta empresa?');
         if (!confirmed) return;
 
         setDeletingCompanyId(companyId);
@@ -766,7 +766,7 @@ export default function DashboardPage() {
 
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setData(current =>
@@ -779,7 +779,7 @@ export default function DashboardPage() {
             );
 
             if (editingCompanyId === companyId) {
-                cancelEditCompany();
+                cancelEditarCompany();
             }
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
@@ -788,13 +788,13 @@ export default function DashboardPage() {
         }
     }
 
-    function openPitchDetails(pitch: DashboardPitchItem) {
+    function openPitchDetails(pitch: PainelPitchItem) {
         setActivePitch(pitch);
-        setIsPitchModalOpen(true);
+        setIsPitchModalAbrir(true);
     }
 
     function closePitchDetails() {
-        setIsPitchModalOpen(false);
+        setIsPitchModalAbrir(false);
     }
 
     if (loading) {
@@ -802,7 +802,7 @@ export default function DashboardPage() {
             <section className="card flex min-h-[280px] items-center justify-center">
                 <span className="inline-flex items-center gap-2 text-slate-400">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading dashboard...
+                    Carregando painel...
                 </span>
             </section>
         );
@@ -823,9 +823,9 @@ export default function DashboardPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Dashboard</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Painel</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Real-time metrics from your application pipeline.
+                    Metricas em tempo real do seu pipeline de candidaturas.
                 </p>
             </header>
 
@@ -859,7 +859,7 @@ export default function DashboardPage() {
                                         : 'text-slate-300 hover:bg-slate-800/80'
                                 }`}
                             >
-                                Monthly
+                                Mensal
                             </button>
                             <button
                                 type="button"
@@ -870,7 +870,7 @@ export default function DashboardPage() {
                                         : 'text-slate-300 hover:bg-slate-800/80'
                                 }`}
                             >
-                                Yearly
+                                Anual
                             </button>
                         </div>
                     </div>
@@ -928,26 +928,26 @@ export default function DashboardPage() {
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h3 className="text-base font-semibold text-slate-100 md:text-lg">
-                            Watch List Applications
+                            Candidaturas em observacao
                         </h3>
                         <p className="text-sm text-slate-300">
-                            Track applications with status In Progress or Interview.
+                            Acompanhe candidaturas com status Em andamento ou Entrevista.
                         </p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="badge border border-cyan-500/40 bg-cyan-500/15 text-cyan-200">
-                            In Progress: {watchListMetrics.inProgress}
+                            Em andamento: {watchListMetrics.inProgress}
                         </span>
                         <span className="badge border border-amber-500/40 bg-amber-500/15 text-amber-200">
-                            Interview: {watchListMetrics.interview}
+                            Entrevista: {watchListMetrics.interview}
                         </span>
                     </div>
                 </div>
 
                 {watchListApplications.length === 0 ? (
                     <p className="text-sm text-slate-400">
-                        No applications in In Progress or Interview yet.
+                        Ainda nao ha candidaturas com status Em andamento ou Entrevista.
                     </p>
                 ) : (
                     <div className="space-y-3">
@@ -955,14 +955,14 @@ export default function DashboardPage() {
                             <table className="min-w-[1200px]">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Company</th>
-                                        <th>Role</th>
-                                        <th>Work Mode</th>
-                                        <th>Location</th>
-                                        <th>Job URL</th>
+                                        <th>Data</th>
+                                        <th>Empresa</th>
+                                        <th>Cargo</th>
+                                        <th>Modalidade</th>
+                                        <th>Localizacao</th>
+                                        <th>URL da vaga</th>
                                         <th>Status</th>
-                                        <th>Category</th>
+                                        <th>Categoria</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -988,7 +988,7 @@ export default function DashboardPage() {
                                                             rel="noopener noreferrer"
                                                             className="text-cyan-300 hover:underline"
                                                         >
-                                                            Open
+                                                            Abrir
                                                         </a>
                                                     ) : (
                                                         '-'
@@ -1018,7 +1018,7 @@ export default function DashboardPage() {
                                         disabled={watchListPage <= 1}
                                         onClick={() => setWatchListPage(current => Math.max(1, current - 1))}
                                     >
-                                        Previous
+                                        Anterior
                                     </button>
 
                                     {watchListPaginationItems.map((item, index) =>
@@ -1055,7 +1055,7 @@ export default function DashboardPage() {
                                             )
                                         }
                                     >
-                                        Next
+                                        Proximo
                                     </button>
                                 </div>
                             ) : null}
@@ -1067,21 +1067,21 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Latest Applications</h3>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Ultimas candidaturas</h3>
                         <p className="text-sm text-slate-300">
-                            Showing your most recent applications with pagination.
+                            Exibindo suas candidaturas mais recentes com paginacao.
                         </p>
                     </div>
 
                     <div className="w-full max-w-sm">
                         <label htmlFor="dashboard-company-filter" className="label">
-                            Filter by company or role
+                            Filtrar por empresa ou cargo
                         </label>
                         <input
                             id="dashboard-company-filter"
                             type="text"
                             className="input"
-                            placeholder="Search company or role..."
+                            placeholder="Buscar empresa ou cargo..."
                             value={companyFilter}
                             onChange={event => setCompanyFilter(event.target.value)}
                         />
@@ -1092,24 +1092,24 @@ export default function DashboardPage() {
                     <table className="min-w-[1600px]">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Company</th>
-                                <th>Role</th>
-                                <th>Work Mode</th>
-                                <th>Location</th>
-                                <th>Job URL</th>
+                                <th>Data</th>
+                                <th>Empresa</th>
+                                <th>Cargo</th>
+                                <th>Modalidade</th>
+                                <th>Localizacao</th>
+                                <th>URL da vaga</th>
                                 <th>Status</th>
-                                <th>Category</th>
-                                <th className="min-w-[260px]">Recruiter Notes</th>
-                                <th className="min-w-[320px]">Notes</th>
-                                <th>Actions</th>
+                                <th>Categoria</th>
+                                <th className="min-w-[260px]">Observacoes do recrutador</th>
+                                <th className="min-w-[320px]">Observacoes</th>
+                                <th>Acoes</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedApplications.length === 0 ? (
                                 <tr>
                                     <td colSpan={11} className="py-10 text-center text-slate-400">
-                                        No applications found for this filter.
+                                        Nenhuma candidatura encontrada para este filtro.
                                     </td>
                                 </tr>
                             ) : (
@@ -1132,7 +1132,7 @@ export default function DashboardPage() {
                                                         rel="noopener noreferrer"
                                                         className="text-cyan-300 hover:underline"
                                                     >
-                                                        Open
+                                                        Abrir
                                                     </a>
                                                 ) : (
                                                     '-'
@@ -1152,7 +1152,7 @@ export default function DashboardPage() {
                                                     className="btn-danger"
                                                     disabled={deletingRow}
                                                     onClick={() =>
-                                                        handleDeleteDashboardApplication(application.id)
+                                                        handleDeletePainelApplication(application.id)
                                                     }
                                                 >
                                                     {deletingRow ? (
@@ -1160,7 +1160,7 @@ export default function DashboardPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </td>
                                         </tr>
@@ -1183,7 +1183,7 @@ export default function DashboardPage() {
                                 setApplicationsPage(current => Math.max(1, current - 1))
                             }
                         >
-                            Previous
+                            Anterior
                         </button>
 
                         {applicationsPaginationItems.map((item, index) =>
@@ -1220,7 +1220,7 @@ export default function DashboardPage() {
                                 )
                             }
                         >
-                            Next
+                            Proximo
                         </button>
                     </div>
                 </div>
@@ -1229,25 +1229,25 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Websites To Apply</h3>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Sites para aplicar</h3>
                         <p className="text-sm text-slate-300">
-                            Showing your saved websites to apply.
+                            Exibindo seus sites salvos para candidatura.
                         </p>
                     </div>
                 </div>
 
                 {data.websites_to_apply.length === 0 ? (
-                    <p className="text-sm text-slate-400">No websites saved yet.</p>
+                    <p className="text-sm text-slate-400">Nenhum site salvo ainda.</p>
                 ) : (
                     <div className="space-y-3">
                         <div className="table-wrapper">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Website</th>
-                                        <th>Type</th>
-                                        <th>Created</th>
+                                        <th>Nome</th>
+                                        <th>Site</th>
+                                        <th>Tipo</th>
+                                        <th>Criado em</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1264,7 +1264,7 @@ export default function DashboardPage() {
                                                             rel="noopener noreferrer"
                                                             className="text-cyan-300 hover:underline"
                                                         >
-                                                            Open
+                                                            Abrir
                                                         </a>
                                                     ) : (
                                                         item.website_url
@@ -1292,7 +1292,7 @@ export default function DashboardPage() {
                                             setWebsitesPage(current => Math.max(1, current - 1))
                                         }
                                     >
-                                        Previous
+                                        Anterior
                                     </button>
 
                                     {websitesPaginationItems.map((item, index) =>
@@ -1329,7 +1329,7 @@ export default function DashboardPage() {
                                             )
                                         }
                                     >
-                                        Next
+                                        Proximo
                                     </button>
                                 </div>
                             </div>
@@ -1341,19 +1341,19 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Companies</h3>
-                        <p className="text-sm text-slate-300">Showing your saved companies to apply.</p>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Empresas</h3>
+                        <p className="text-sm text-slate-300">Exibindo suas empresas salvas para candidatura.</p>
                     </div>
 
                     <div className="w-full max-w-sm">
                         <label htmlFor="dashboard-companies-filter" className="label">
-                            Filter by company or role
+                            Filtrar por empresa ou cargo
                         </label>
                         <input
                             id="dashboard-companies-filter"
                             type="text"
                             className="input"
-                            placeholder="Search company..."
+                            placeholder="Buscar empresa..."
                             value={companiesFilter}
                             onChange={event => setCompaniesFilter(event.target.value)}
                         />
@@ -1364,19 +1364,19 @@ export default function DashboardPage() {
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Website</th>
-                                <th>Contacts</th>
-                                <th>Notes</th>
-                                <th>Created</th>
-                                <th>Actions</th>
+                                <th>Nome</th>
+                                <th>Site</th>
+                                <th>Contatos</th>
+                                <th>Observacoes</th>
+                                <th>Criado em</th>
+                                <th>Acoes</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedCompanies.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="py-12 text-center text-slate-400">
-                                        No companies found for this filter.
+                                        Nenhuma empresa encontrada para este filtro.
                                     </td>
                                 </tr>
                             ) : (
@@ -1423,7 +1423,7 @@ export default function DashboardPage() {
                                                         rel="noopener noreferrer"
                                                         className="text-cyan-300 hover:underline"
                                                     >
-                                                        Open
+                                                        Abrir
                                                     </a>
                                                 ) : (
                                                     '-'
@@ -1470,23 +1470,23 @@ export default function DashboardPage() {
                                                                 type="button"
                                                                 className="btn-primary"
                                                                 disabled={rowBusy}
-                                                                onClick={() => saveEditCompany(company.id)}
+                                                                onClick={() => saveEditarCompany(company.id)}
                                                             >
                                                                 {savingCompanyId === company.id ? (
                                                                     <Loader2 className="h-4 w-4 animate-spin" />
                                                                 ) : (
                                                                     <Save className="h-4 w-4" />
                                                                 )}
-                                                                Save
+                                                                Salvar
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 className="btn-secondary"
                                                                 disabled={rowBusy}
-                                                                onClick={cancelEditCompany}
+                                                                onClick={cancelEditarCompany}
                                                             >
                                                                 <X className="h-4 w-4" />
-                                                                Cancel
+                                                                Cancelar
                                                             </button>
                                                         </>
                                                     ) : (
@@ -1497,7 +1497,7 @@ export default function DashboardPage() {
                                                             onClick={() => startEditCompany(company)}
                                                         >
                                                             <Edit3 className="h-4 w-4" />
-                                                            Edit
+                                                            Editar
                                                         </button>
                                                     )}
 
@@ -1512,7 +1512,7 @@ export default function DashboardPage() {
                                                         ) : (
                                                             <Trash2 className="h-4 w-4" />
                                                         )}
-                                                        Delete
+                                                        Excluir
                                                     </button>
                                                 </div>
                                             </td>
@@ -1537,7 +1537,7 @@ export default function DashboardPage() {
                                     setCompaniesPage(current => Math.max(1, current - 1))
                                 }
                             >
-                                Previous
+                                Anterior
                             </button>
 
                             {companiesPaginationItems.map((item, index) =>
@@ -1574,7 +1574,7 @@ export default function DashboardPage() {
                                     )
                                 }
                             >
-                                Next
+                                Proximo
                             </button>
                         </div>
                     ) : null}
@@ -1584,13 +1584,13 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Saved Pitches</h3>
-                        <p className="text-sm text-slate-300">Click a card to open full pitch.</p>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Pitches salvos</h3>
+                        <p className="text-sm text-slate-300">Clique em um card para abrir o pitch completo.</p>
                     </div>
                 </div>
 
                 {data.pitches.length === 0 ? (
-                    <p className="text-sm text-slate-400">No pitches added yet.</p>
+                    <p className="text-sm text-slate-400">Nenhum pitch adicionado.</p>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         {data.pitches.map(item => (
@@ -1606,7 +1606,7 @@ export default function DashboardPage() {
                                     {getPitchPreview(item.pitch)}
                                 </p>
                                 <p className="mt-3 text-xs text-slate-400">
-                                    Saved on {new Date(item.created_at).toLocaleDateString()}
+                                    Salvo em {new Date(item.created_at).toLocaleDateString()}
                                 </p>
                             </button>
                         ))}
@@ -1617,8 +1617,8 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Networking Follow-ups</h3>
-                        <p className="text-sm text-slate-300">Showing the nearest follow-up dates.</p>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Follow-ups de networking</h3>
+                        <p className="text-sm text-slate-300">Exibindo as proximas datas de follow-up.</p>
                     </div>
 
                     <div
@@ -1629,7 +1629,7 @@ export default function DashboardPage() {
                 </div>
 
                 {data.networking_followups.length === 0 ? (
-                    <p className="text-sm text-slate-400">No follow-ups scheduled yet.</p>
+                    <p className="text-sm text-slate-400">Nenhum follow-up agendado ainda.</p>
                 ) : (
                     <div className="space-y-3">
                         {paginatedFollowUps.map(item => {
@@ -1640,10 +1640,10 @@ export default function DashboardPage() {
                                   : 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-200';
 
                             const daysLabel = item.is_overdue
-                                ? `${Math.abs(item.days_until_follow_up)}d overdue`
+                                ? `${Math.abs(item.days_until_follow_up)}d atrasado`
                                 : item.days_until_follow_up === 0
-                                  ? 'Due today'
-                                  : `${item.days_until_follow_up}d left`;
+                                  ? 'Vence hoje'
+                                  : `${item.days_until_follow_up}d restantes`;
 
                             return (
                                 <article
@@ -1657,11 +1657,11 @@ export default function DashboardPage() {
                                                 {[item.company, item.role_title].filter(Boolean).join(' • ') || '-'}
                                             </p>
                                             <p className="mt-1 text-xs text-slate-400">
-                                                Last contact:{' '}
+                                                Ultimo contato:{' '}
                                                 {formatIsoDate(item.last_contact_at)}
                                             </p>
                                             <p className="text-xs text-slate-400">
-                                                Next follow-up: {formatIsoDate(item.next_follow_up_at)}
+                                                Proximo follow-up: {formatIsoDate(item.next_follow_up_at)}
                                             </p>
                                         </div>
 
@@ -1678,7 +1678,7 @@ export default function DashboardPage() {
                                                 ) : (
                                                     <CheckCircle2 className="h-4 w-4" />
                                                 )}
-                                                Follow-up done
+                                                Follow-up concluido
                                             </button>
                                         </div>
                                     </div>
@@ -1699,7 +1699,7 @@ export default function DashboardPage() {
                                             setFollowUpsPage(current => Math.max(1, current - 1))
                                         }
                                     >
-                                        Previous
+                                        Anterior
                                     </button>
 
                                     {followUpsPaginationItems.map((item, index) =>
@@ -1736,7 +1736,7 @@ export default function DashboardPage() {
                                             )
                                         }
                                     >
-                                        Next
+                                        Proximo
                                     </button>
                                 </div>
                             </div>
@@ -1748,18 +1748,18 @@ export default function DashboardPage() {
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Birthdays This Month</h3>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Aniversarios deste mes</h3>
                         <p className="text-sm text-slate-300">
-                            Contacts celebrating in {currentMonthLabel}.
+                            Contatos que fazem aniversario em {currentMonthLabel}.
                         </p>
                     </div>
                     <span className="badge border border-rose-400/40 bg-rose-500/15 text-rose-200">
-                        {data.birthdays_this_month.length} this month
+                        {data.birthdays_this_month.length} neste mes
                     </span>
                 </div>
 
                 {data.birthdays_this_month.length === 0 ? (
-                    <p className="text-sm text-slate-400">No birthdays registered for this month.</p>
+                    <p className="text-sm text-slate-400">Nenhum aniversario registrado neste mes.</p>
                 ) : (
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {data.birthdays_this_month.map(item => (
@@ -1782,7 +1782,7 @@ export default function DashboardPage() {
                                                 : 'border border-rose-500/40 bg-rose-500/15 text-rose-200'
                                         }`}
                                     >
-                                        {item.is_today ? 'Today' : formatBirthdayMonthDay(item.birthday_date)}
+                                        {item.is_today ? 'Hoje' : formatBirthdayMonthDay(item.birthday_date)}
                                     </span>
                                 </div>
                             </article>
@@ -1794,26 +1794,26 @@ export default function DashboardPage() {
             {activePitch ? (
                 <div
                     className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
-                        isPitchModalOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+                        isPitchModalAbrir ? 'opacity-100' : 'pointer-events-none opacity-0'
                     }`}
                 >
                     <button
                         type="button"
-                        aria-label="Close pitch modal"
+                        aria-label="Fechar modal de pitch"
                         className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
                         onClick={closePitchDetails}
                     />
 
                     <article
                         className={`relative z-10 flex max-h-[90dvh] w-full max-w-3xl flex-col rounded-2xl border border-amber-300/35 bg-gradient-to-br from-slate-950/95 via-slate-900/95 to-amber-950/35 p-5 shadow-[0_32px_80px_rgba(2,6,23,0.75)] transition-all duration-200 ${
-                            isPitchModalOpen ? 'scale-100' : 'scale-95'
+                            isPitchModalAbrir ? 'scale-100' : 'scale-95'
                         }`}
                     >
                         <header className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h3 className="text-xl font-semibold text-slate-100">{activePitch.name}</h3>
                                 <p className="text-xs text-slate-400">
-                                    Saved on {new Date(activePitch.created_at).toLocaleDateString()}
+                                    Salvo em {new Date(activePitch.created_at).toLocaleDateString()}
                                 </p>
                             </div>
 
@@ -1822,7 +1822,7 @@ export default function DashboardPage() {
                                 className="btn-secondary"
                                 onClick={closePitchDetails}
                             >
-                                Close
+                                Fechar
                             </button>
                         </header>
 

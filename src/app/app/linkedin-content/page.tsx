@@ -88,7 +88,7 @@ function sortPlans(plans: LinkedinContentPlan[]) {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 function toTimeInputValue(value: string) {
@@ -137,7 +137,7 @@ function openNativeDatePicker(input: HTMLInputElement | null) {
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
@@ -163,7 +163,7 @@ export default function LinkedinContentPage() {
         openNativeDatePicker(createDateInputRef.current);
     }
 
-    function openEditDatePicker() {
+    function openEditarDatePicker() {
         openNativeDatePicker(editDateInputRef.current);
     }
 
@@ -214,7 +214,7 @@ export default function LinkedinContentPage() {
 
             setPlans(current => sortPlans([...current, created]));
             setFormValues(getInitialFormState());
-            setSuccessMessage('LinkedIn content row added.');
+            setSuccessMessage('Linha de conteudo do LinkedIn adicionada.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -238,12 +238,12 @@ export default function LinkedinContentPage() {
         });
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(planId: string) {
+    async function saveEditar(planId: string) {
         setSavingRowId(planId);
         setError(null);
         setSuccessMessage(null);
@@ -258,8 +258,8 @@ export default function LinkedinContentPage() {
             );
 
             setPlans(current => sortPlans(current.map(item => (item.id === planId ? updated : item))));
-            cancelEdit();
-            setSuccessMessage('LinkedIn content row updated.');
+            cancelEditar();
+            setSuccessMessage('Linha de conteudo do LinkedIn atualizada.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -268,7 +268,7 @@ export default function LinkedinContentPage() {
     }
 
     async function handleDelete(planId: string) {
-        const confirmed = window.confirm('Delete this planned LinkedIn content row?');
+        const confirmed = window.confirm('Excluir esta linha planejada de conteudo do LinkedIn?');
         if (!confirmed) return;
 
         setDeletingRowId(planId);
@@ -279,7 +279,7 @@ export default function LinkedinContentPage() {
             const response = await fetch(`/api/linkedin-content/${planId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setPlans(current => current.filter(item => item.id !== planId));
@@ -290,9 +290,9 @@ export default function LinkedinContentPage() {
                 return next;
             });
             if (editingId === planId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('LinkedIn content row removed.');
+            setSuccessMessage('Linha de conteudo do LinkedIn removida.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -303,18 +303,18 @@ export default function LinkedinContentPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">LinkedIn Content</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Conteudo LinkedIn</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Plan your post pipeline in report order, keep hooks and CTA ready, and track status/performance.
+                    Planeje o pipeline de posts em ordem, deixe ganchos e CTA prontos e acompanhe status/desempenho.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Planned Post</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar post planejado</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="scheduled_date">
-                            Date *
+                            Data *
                         </label>
                         <div className="relative">
                             <input
@@ -337,7 +337,7 @@ export default function LinkedinContentPage() {
                                 type="button"
                                 onClick={openCreateDatePicker}
                                 className="absolute inset-y-0 right-2 inline-flex items-center text-slate-300 transition-colors hover:text-cyan-200"
-                                aria-label="Open calendar"
+                                aria-label="Abrir calendario"
                             >
                                 <CalendarDays className="h-4 w-4" />
                             </button>
@@ -346,7 +346,7 @@ export default function LinkedinContentPage() {
 
                     <div>
                         <label className="label" htmlFor="scheduled_time">
-                            Time *
+                            Horario *
                         </label>
                         <input
                             id="scheduled_time"
@@ -365,14 +365,14 @@ export default function LinkedinContentPage() {
 
                     <div className="md:col-span-2">
                         <label className="label" htmlFor="theme">
-                            Theme *
+                            Tema *
                         </label>
                         <input
                             id="theme"
                             type="text"
                             required
                             className="input"
-                            placeholder="Ex: AI, Career, Projects..."
+                            placeholder="Ex: IA, Carreira, Projetos..."
                             value={formValues.theme}
                             onChange={event =>
                                 setFormValues(current => ({ ...current, theme: event.target.value }))
@@ -382,13 +382,13 @@ export default function LinkedinContentPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="content_type">
-                            Content Type
+                            Tipo de conteudo
                         </label>
                         <input
                             id="content_type"
                             type="text"
                             className="input"
-                            placeholder="Ex: Image + Comment"
+                            placeholder="Ex: Imagem + Comentario"
                             value={formValues.content_type}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -401,7 +401,7 @@ export default function LinkedinContentPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="title_hook">
-                            Title / Hook
+                            Titulo / Gancho
                         </label>
                         <input
                             id="title_hook"
@@ -419,7 +419,7 @@ export default function LinkedinContentPage() {
 
                     <div className="md:col-span-2 xl:col-span-4">
                         <label className="label" htmlFor="content">
-                            Content
+                            Conteudo
                         </label>
                         <textarea
                             id="content"
@@ -433,7 +433,7 @@ export default function LinkedinContentPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="objective">
-                            Objective
+                            Objetivo
                         </label>
                         <input
                             id="objective"
@@ -448,7 +448,7 @@ export default function LinkedinContentPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="cta">
-                            CTA (Call to Action)
+                            CTA (Chamada para acao)
                         </label>
                         <input
                             id="cta"
@@ -486,13 +486,13 @@ export default function LinkedinContentPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="performance">
-                            Performance
+                            Desempenho
                         </label>
                         <input
                             id="performance"
                             type="text"
                             className="input"
-                            placeholder="Ex: 2,100 views"
+                            placeholder="Ex: 2.100 visualizacoes"
                             value={formValues.performance}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -506,7 +506,7 @@ export default function LinkedinContentPage() {
                     <div className="md:col-span-2 xl:col-span-4">
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Add to Plan'}
+                            {submitting ? 'Salvando...' : 'Adicionar ao plano'}
                         </button>
                     </div>
                 </form>
@@ -527,16 +527,16 @@ export default function LinkedinContentPage() {
             <div className="card p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">
-                        Scheduled Queue
+                        Fila agendada
                     </p>
                     <span className={`badge border ${getStatusBadgeClass('scheduled')}`}>
-                        {scheduledPlans.length} Scheduled
+                        {scheduledPlans.length} Agendado(s)
                     </span>
                 </div>
 
                 {scheduledPlans.length === 0 ? (
                     <p className="text-sm text-slate-400">
-                        No posts with status <span className="font-medium text-slate-200">Scheduled</span>.
+                        Nenhum post com status <span className="font-medium text-slate-200">Agendado</span>.
                     </p>
                 ) : (
                     <div className="space-y-2">
@@ -546,7 +546,7 @@ export default function LinkedinContentPage() {
                                 className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2"
                             >
                                 <p className="text-xs text-amber-100">
-                                    {formatDate(plan.scheduled_date)} at {formatTime(plan.scheduled_time)}
+                                    {formatDate(plan.scheduled_date)} as {formatTime(plan.scheduled_time)}
                                 </p>
                                 <p className="text-sm font-medium text-slate-100">{plan.theme}</p>
                             </div>
@@ -559,18 +559,18 @@ export default function LinkedinContentPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Theme</th>
-                            <th>Content Type</th>
-                            <th>Title / Hook</th>
-                            <th>Content</th>
-                            <th>Objective</th>
+                            <th>Data</th>
+                            <th>Horario</th>
+                            <th>Tema</th>
+                            <th>Tipo de conteudo</th>
+                            <th>Titulo / Gancho</th>
+                            <th>Conteudo</th>
+                            <th>Objetivo</th>
                             <th>CTA</th>
                             <th>Status</th>
-                            <th>Performance</th>
+                            <th>Desempenho</th>
                             <th className="sticky right-0 z-20 bg-slate-900/95 shadow-[-8px_0_14px_-12px_rgba(2,8,23,1)]">
-                                Actions
+                                Acoes
                             </th>
                         </tr>
                     </thead>
@@ -579,14 +579,14 @@ export default function LinkedinContentPage() {
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading plan...
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Carregando plano...
                                     </span>
                                 </td>
                             </tr>
                         ) : plans.length === 0 ? (
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
-                                    No LinkedIn content rows added.
+                                    Nenhum item de conteudo do LinkedIn adicionado.
                                 </td>
                             </tr>
                         ) : (
@@ -611,8 +611,8 @@ export default function LinkedinContentPage() {
                                                         type="date"
                                                         className="input min-w-[165px] pr-10"
                                                         value={editingValues.scheduled_date}
-                                                        onFocus={openEditDatePicker}
-                                                        onClick={openEditDatePicker}
+                                                        onFocus={openEditarDatePicker}
+                                                        onClick={openEditarDatePicker}
                                                         onChange={event =>
                                                             setEditingValues(current => ({
                                                                 ...current,
@@ -622,9 +622,9 @@ export default function LinkedinContentPage() {
                                                     />
                                                     <button
                                                         type="button"
-                                                        onClick={openEditDatePicker}
+                                                        onClick={openEditarDatePicker}
                                                         className="absolute inset-y-0 right-2 inline-flex items-center text-slate-300 transition-colors hover:text-cyan-200"
-                                                        aria-label="Open calendar"
+                                                        aria-label="Abrir calendario"
                                                     >
                                                         <CalendarDays className="h-4 w-4" />
                                                     </button>
@@ -726,7 +726,7 @@ export default function LinkedinContentPage() {
                                                         {isContentExpanded ? fullContent : contentPreview}
                                                     </span>
                                                     <span className="mt-1 inline-block text-xs font-medium text-cyan-300 hover:text-cyan-200">
-                                                        {isContentExpanded ? 'Show less' : 'Show more'}
+                                                        {isContentExpanded ? 'Mostrar menos' : 'Mostrar mais'}
                                                     </span>
                                                 </button>
                                             ) : (
@@ -817,23 +817,23 @@ export default function LinkedinContentPage() {
                                                             type="button"
                                                             className="btn-primary"
                                                             disabled={rowBusy}
-                                                            onClick={() => saveEdit(plan.id)}
+                                                            onClick={() => saveEditar(plan.id)}
                                                         >
                                                             {savingRowId === plan.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Save className="h-4 w-4" />
                                                             )}
-                                                            Save
+                                                            Salvar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className="btn-secondary"
                                                             disabled={rowBusy}
-                                                            onClick={cancelEdit}
+                                                            onClick={cancelEditar}
                                                         >
                                                             <X className="h-4 w-4" />
-                                                            Cancel
+                                                            Cancelar
                                                         </button>
                                                     </>
                                                 ) : (
@@ -844,7 +844,7 @@ export default function LinkedinContentPage() {
                                                         onClick={() => startEdit(plan)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
                                                 )}
 
@@ -859,7 +859,7 @@ export default function LinkedinContentPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </div>
                                         </td>

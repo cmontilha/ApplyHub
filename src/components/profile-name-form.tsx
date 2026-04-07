@@ -11,7 +11,7 @@ type ProfileNameFormProps = {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 export function ProfileNameForm({ initialName }: ProfileNameFormProps) {
@@ -30,7 +30,7 @@ export function ProfileNameForm({ initialName }: ProfileNameFormProps) {
 
         const trimmedName = name.trim();
         if (trimmedName.length < 2) {
-            setError('Name must have at least 2 characters.');
+            setError('O nome precisa ter pelo menos 2 caracteres.');
             return;
         }
 
@@ -46,7 +46,7 @@ export function ProfileNameForm({ initialName }: ProfileNameFormProps) {
                 return;
             }
 
-            setSuccess('Name updated successfully.');
+            setSuccess('Nome atualizado com sucesso.');
             router.refresh();
         } catch (updateError) {
             setError(getErrorMessage(updateError));
@@ -71,7 +71,7 @@ export function ProfileNameForm({ initialName }: ProfileNameFormProps) {
 
             <div>
                 <label className="label" htmlFor="profile-name">
-                    Full name
+                    Nome completo
                 </label>
                 <input
                     id="profile-name"
@@ -79,14 +79,14 @@ export function ProfileNameForm({ initialName }: ProfileNameFormProps) {
                     className="input max-w-md"
                     value={name}
                     onChange={event => setName(event.target.value)}
-                    placeholder="Your full name"
+                    placeholder="Seu nome completo"
                     required
                 />
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {loading ? 'Saving...' : 'Save Name'}
+                {loading ? 'Salvando...' : 'Salvar nome'}
             </button>
         </form>
     );

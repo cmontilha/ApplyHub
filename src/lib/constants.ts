@@ -34,6 +34,35 @@ export const LINKEDIN_CONTENT_STATUS_OPTIONS: LinkedinContentStatus[] = [
 ];
 
 export function toLabel(value: string) {
+    const labels: Record<string, string> = {
+        onsite: 'Presencial',
+        hybrid: 'Hibrido',
+        remote: 'Remoto',
+        applied: 'Aplicado',
+        in_progress: 'Em andamento',
+        interview: 'Entrevista',
+        rejected: 'Rejeitado',
+        offer: 'Oferta',
+        referral: 'Indicacao',
+        no_referral: 'Sem indicacao',
+        recruiter_contact: 'Contato de recrutador',
+        easy: 'Facil',
+        medium: 'Medio',
+        hard: 'Dificil',
+        both: 'Nacional e internacional',
+        nacional: 'Nacional',
+        internacional: 'Internacional',
+        planned: 'Planejado',
+        scheduled: 'Agendado',
+        posted: 'Publicado',
+        not_done: 'Nao feito',
+    };
+
+    const translated = labels[value];
+    if (translated) {
+        return translated;
+    }
+
     return value
         .split('_')
         .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))

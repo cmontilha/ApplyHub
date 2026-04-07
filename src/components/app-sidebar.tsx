@@ -34,33 +34,33 @@ type NavSection = {
 
 const NAV_SECTIONS: NavSection[] = [
     {
-        title: 'Overview',
-        items: [{ href: '/app/dashboard', label: 'Dashboard', icon: BarChart3 }],
+        title: 'Visao geral',
+        items: [{ href: '/app/dashboard', label: 'Painel', icon: BarChart3 }],
     },
     {
-        title: 'Pipeline',
+        title: 'Processo seletivo',
         items: [
-            { href: '/app/applications', label: 'Applications', icon: Briefcase },
-            { href: '/app/companies', label: 'Companies', icon: Building2 },
-            { href: '/app/networking', label: 'Networking', icon: Users },
-            { href: '/app/websites-to-apply', label: 'Websites To Apply', icon: Globe2 },
+            { href: '/app/applications', label: 'Candidaturas', icon: Briefcase },
+            { href: '/app/companies', label: 'Empresas', icon: Building2 },
+            { href: '/app/networking', label: 'Rede de contatos', icon: Users },
+            { href: '/app/websites-to-apply', label: 'Sites para aplicar', icon: Globe2 },
         ],
     },
     {
-        title: 'Library',
+        title: 'Biblioteca',
         items: [
-            { href: '/app/links', label: 'Links', icon: Link2 },
-            { href: '/app/drive', label: 'Drive', icon: HardDrive },
+            { href: '/app/links', label: 'Links salvos', icon: Link2 },
+            { href: '/app/drive', label: 'Arquivos', icon: HardDrive },
         ],
     },
     {
-        title: 'Career Assets',
+        title: 'Materiais de carreira',
         items: [
-            { href: '/app/resumes', label: 'Resumes', icon: FolderOpen },
+            { href: '/app/resumes', label: 'Curriculos', icon: FolderOpen },
             { href: '/app/pitch', label: 'Pitch', icon: MessageSquare },
-            { href: '/app/certifications', label: 'Certifications', icon: GraduationCap },
-            { href: '/app/tips-for-resume', label: 'Tips for Resume', icon: FileText },
-            { href: '/app/linkedin-content', label: 'LinkedIn Content', icon: Linkedin },
+            { href: '/app/certifications', label: 'Certificacoes', icon: GraduationCap },
+            { href: '/app/tips-for-resume', label: 'Dicas de curriculo', icon: FileText },
+            { href: '/app/linkedin-content', label: 'Conteudo para LinkedIn', icon: Linkedin },
         ],
     },
 ];
@@ -93,7 +93,7 @@ export function AppSidebar() {
             <div className="px-4 py-4">
                 <Link
                     href="/app/dashboard"
-                    title="Go to dashboard"
+                    title="Ir para o painel"
                     className={`flex min-w-0 items-center gap-3 rounded-xl border border-transparent p-1 transition-colors duration-200 hover:border-cyan-300/30 hover:bg-cyan-400/10 ${
                         isCollapsed ? 'md:justify-center' : ''
                     }`}
@@ -151,14 +151,14 @@ export function AppSidebar() {
                 <button
                     type="button"
                     onClick={handleToggle}
-                    title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    title={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
                     className={`inline-flex w-full items-center gap-2 rounded-xl border border-cyan-300/30 bg-transparent px-4 py-2 text-sm font-medium text-slate-100 transition-all duration-200 hover:border-cyan-300/60 hover:bg-cyan-400/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-0 ${
                         isCollapsed ? 'md:justify-center md:px-2' : 'justify-center'
                     }`}
                 >
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                     <span className={`${isCollapsed ? 'md:hidden' : ''}`}>
-                        {isCollapsed ? 'Expand' : 'Collapse'}
+                        {isCollapsed ? 'Expandir' : 'Recolher'}
                     </span>
                 </button>
             </div>

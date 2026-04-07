@@ -18,13 +18,13 @@ function getInitialFormState(): PitchFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
@@ -49,7 +49,7 @@ export default function PitchPage() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const [activePitch, setActivePitch] = useState<Pitch | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalAbrir, setIsModalAbrir] = useState(false);
 
     async function loadPitches() {
         setLoadingList(true);
@@ -74,7 +74,7 @@ export default function PitchPage() {
 
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                setIsModalOpen(false);
+                setIsModalAbrir(false);
             }
         };
 
@@ -93,10 +93,10 @@ export default function PitchPage() {
     }, [activePitch]);
 
     useEffect(() => {
-        if (isModalOpen || !activePitch) return;
+        if (isModalAbrir || !activePitch) return;
         const timer = window.setTimeout(() => setActivePitch(null), 180);
         return () => window.clearTimeout(timer);
-    }, [activePitch, isModalOpen]);
+    }, [activePitch, isModalAbrir]);
 
     async function handleCreate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -115,7 +115,7 @@ export default function PitchPage() {
 
             setPitches(current => [created, ...current]);
             setFormValues(getInitialFormState());
-            setSuccessMessage('Pitch added.');
+            setSuccessMessage('Pitch adicionado.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -125,11 +125,11 @@ export default function PitchPage() {
 
     function openPitchDetails(pitch: Pitch) {
         setActivePitch(pitch);
-        setIsModalOpen(true);
+        setIsModalAbrir(true);
     }
 
     function closePitchDetails() {
-        setIsModalOpen(false);
+        setIsModalAbrir(false);
         setEditingPitchId(null);
         setEditingValues(getInitialFormState());
     }
@@ -144,12 +144,12 @@ export default function PitchPage() {
         setSuccessMessage(null);
     }
 
-    function cancelEditPitch() {
+    function cancelEditarPitch() {
         setEditingPitchId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function handleSavePitch(pitchId: string) {
+    async function handleSalvarPitch(pitchId: string) {
         setSavingPitchId(pitchId);
         setError(null);
         setSuccessMessage(null);
@@ -165,8 +165,8 @@ export default function PitchPage() {
 
             setPitches(current => current.map(item => (item.id === pitchId ? updated : item)));
             setActivePitch(current => (current?.id === pitchId ? updated : current));
-            cancelEditPitch();
-            setSuccessMessage('Pitch updated.');
+            cancelEditarPitch();
+            setSuccessMessage('Pitch atualizado.');
         } catch (saveError) {
             setError(getErrorMessage(saveError));
         } finally {
@@ -175,7 +175,7 @@ export default function PitchPage() {
     }
 
     async function handleDeletePitch(pitchId: string) {
-        const confirmed = window.confirm('Delete this pitch?');
+        const confirmed = window.confirm('Excluir este pitch?');
         if (!confirmed) return;
 
         setDeletingPitchId(pitchId);
@@ -186,7 +186,7 @@ export default function PitchPage() {
             const response = await fetch(`/api/pitches/${pitchId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setPitches(current => current.filter(item => item.id !== pitchId));
@@ -195,7 +195,7 @@ export default function PitchPage() {
                 closePitchDetails();
             }
 
-            setSuccessMessage('Pitch removed.');
+            setSuccessMessage('Pitch removido.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -204,9 +204,9 @@ export default function PitchPage() {
     }
 
     const pitchCountLabel = useMemo(() => {
-        if (pitches.length === 0) return 'No pitches saved yet.';
-        if (pitches.length === 1) return '1 pitch saved.';
-        return `${pitches.length} pitches saved.`;
+        if (pitches.length === 0) return 'Nenhum pitch salvo ainda.';
+        if (pitches.length === 1) return '1 pitch salvo.';
+        return `${pitches.length} pitches salvos.`;
     }, [pitches.length]);
 
     const isEditingActivePitch = Boolean(activePitch && editingPitchId === activePitch.id);
@@ -216,23 +216,23 @@ export default function PitchPage() {
             <header>
                 <h2 className="text-2xl font-bold text-slate-100">Pitch</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Save short pitch versions and open any one in focus mode to read the full text.
+                    Salve versoes curtas de pitch e abra qualquer uma no modo foco para ler o texto completo.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Pitch</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar pitch</h3>
                 <form className="grid gap-3 md:grid-cols-2" onSubmit={handleCreate}>
                     <div className="md:col-span-1">
                         <label className="label" htmlFor="pitch-name">
-                            Name *
+                            Nome *
                         </label>
                         <input
                             id="pitch-name"
                             type="text"
                             required
                             className="input"
-                            placeholder="Elevator pitch - Backend"
+                            placeholder="Pitch de elevador - Backend"
                             value={formValues.name}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -251,7 +251,7 @@ export default function PitchPage() {
                             id="pitch-content"
                             required
                             className="input min-h-[160px] resize-y"
-                            placeholder="Write your full pitch here..."
+                            placeholder="Escreva seu pitch completo aqui..."
                             value={formValues.pitch}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -266,7 +266,7 @@ export default function PitchPage() {
                         <p className="text-xs text-slate-400">{pitchCountLabel}</p>
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Save Pitch'}
+                            {submitting ? 'Salvando...' : 'Salvar pitch'}
                         </button>
                     </div>
                 </form>
@@ -286,20 +286,20 @@ export default function PitchPage() {
 
             <div className="card p-4">
                 <div className="mb-4 flex items-center justify-between gap-2">
-                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Saved Pitches</h3>
-                    <p className="text-xs text-slate-400">Click a card to open full pitch.</p>
+                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Pitches salvos</h3>
+                    <p className="text-xs text-slate-400">Clique em um card para abrir o pitch completo.</p>
                 </div>
 
                 {loadingList ? (
                     <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
                         <span className="inline-flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading pitches...
+                            Carregando pitches...
                         </span>
                     </div>
                 ) : pitches.length === 0 ? (
                     <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
-                        No pitches added yet.
+                        Nenhum pitch adicionado.
                     </div>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -316,7 +316,7 @@ export default function PitchPage() {
                                     {getPitchPreview(item.pitch)}
                                 </p>
                                 <p className="mt-3 text-xs text-slate-400">
-                                    Saved on {new Date(item.created_at).toLocaleDateString()}
+                                    Salvo em {new Date(item.created_at).toLocaleDateString()}
                                 </p>
                             </button>
                         ))}
@@ -327,26 +327,26 @@ export default function PitchPage() {
             {activePitch ? (
                 <div
                     className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
-                        isModalOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+                        isModalAbrir ? 'opacity-100' : 'pointer-events-none opacity-0'
                     }`}
                 >
                     <button
                         type="button"
-                        aria-label="Close pitch modal"
+                        aria-label="Fechar modal de pitch"
                         className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
                         onClick={closePitchDetails}
                     />
 
                     <article
                         className={`relative z-10 flex max-h-[90dvh] w-full max-w-3xl flex-col rounded-2xl border border-amber-300/35 bg-gradient-to-br from-slate-950/95 via-slate-900/95 to-amber-950/35 p-5 shadow-[0_32px_80px_rgba(2,6,23,0.75)] transition-all duration-200 ${
-                            isModalOpen ? 'scale-100' : 'scale-95'
+                            isModalAbrir ? 'scale-100' : 'scale-95'
                         }`}
                     >
                         <header className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h3 className="text-xl font-semibold text-slate-100">{activePitch.name}</h3>
                                 <p className="text-xs text-slate-400">
-                                    Saved on {new Date(activePitch.created_at).toLocaleDateString()}
+                                    Salvo em {new Date(activePitch.created_at).toLocaleDateString()}
                                 </p>
                             </div>
 
@@ -357,22 +357,22 @@ export default function PitchPage() {
                                             type="button"
                                             className="btn-primary"
                                             disabled={savingPitchId === activePitch.id}
-                                            onClick={() => handleSavePitch(activePitch.id)}
+                                            onClick={() => handleSalvarPitch(activePitch.id)}
                                         >
                                             {savingPitchId === activePitch.id ? (
                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                             ) : (
                                                 <Save className="h-4 w-4" />
                                             )}
-                                            Save
+                                            Salvar
                                         </button>
                                         <button
                                             type="button"
                                             className="btn-secondary"
                                             disabled={savingPitchId === activePitch.id}
-                                            onClick={cancelEditPitch}
+                                            onClick={cancelEditarPitch}
                                         >
-                                            Cancel
+                                            Cancelar
                                         </button>
                                     </>
                                 ) : (
@@ -382,7 +382,7 @@ export default function PitchPage() {
                                         onClick={() => startEditPitch(activePitch)}
                                     >
                                         <Edit3 className="h-4 w-4" />
-                                        Edit
+                                        Editar
                                     </button>
                                 )}
 
@@ -392,7 +392,7 @@ export default function PitchPage() {
                                     onClick={closePitchDetails}
                                 >
                                     <X className="h-4 w-4" />
-                                    Close
+                                    Fechar
                                 </button>
                             </div>
                         </header>
@@ -402,7 +402,7 @@ export default function PitchPage() {
                                 <div className="space-y-3">
                                     <div>
                                         <label className="label" htmlFor="pitch-edit-name">
-                                            Name *
+                                            Nome *
                                         </label>
                                         <input
                                             id="pitch-edit-name"
@@ -452,7 +452,7 @@ export default function PitchPage() {
                                 ) : (
                                     <Trash2 className="h-4 w-4" />
                                 )}
-                                Delete
+                                Excluir
                             </button>
                         </div>
                     </article>

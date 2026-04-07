@@ -76,7 +76,7 @@ export function ProfileButton({ userEmail, userFirstName }: ProfileButtonProps) 
 
             <button
                 type="button"
-                title="Open profile menu"
+                title="Abrir menu de perfil"
                 onClick={() => setIsOpen(current => !current)}
                 className={`group relative inline-flex h-11 w-11 items-center justify-center rounded-full border text-sm font-semibold tracking-wide text-white transition-all duration-200 ${
                     isOpen
@@ -96,7 +96,7 @@ export function ProfileButton({ userEmail, userFirstName }: ProfileButtonProps) 
                         className="mt-1 inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-800 hover:text-white"
                     >
                         <UserCircle2 className="h-4 w-4" />
-                        Profile
+                        Perfil
                     </Link>
 
                     <Link
@@ -104,7 +104,7 @@ export function ProfileButton({ userEmail, userFirstName }: ProfileButtonProps) 
                         className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 hover:bg-slate-800 hover:text-white"
                     >
                         <Settings className="h-4 w-4" />
-                        Settings
+                        Configuracoes
                     </Link>
 
                     <button
@@ -114,7 +114,7 @@ export function ProfileButton({ userEmail, userFirstName }: ProfileButtonProps) 
                         className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-300 transition-colors duration-150 hover:bg-red-500/15 hover:text-red-200 disabled:opacity-60"
                     >
                         {isLoggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-                        {isLoggingOut ? 'Signing out...' : 'Logout'}
+                        {isLoggingOut ? 'Saindo...' : 'Sair'}
                     </button>
                 </div>
             ) : null}

@@ -22,8 +22,8 @@ export default async function AppLayout({ children }: AppLayoutProps) {
         typeof user.user_metadata?.full_name === 'string'
             ? user.user_metadata.full_name.trim()
             : '';
-    const fallbackName = (user.email ?? 'User').split('@')[0]?.replace(/[._-]/g, ' ') ?? 'User';
-    const firstName = (metadataName || fallbackName).split(/\s+/).filter(Boolean)[0] ?? 'User';
+    const fallbackName = (user.email ?? 'Usuario').split('@')[0]?.replace(/[._-]/g, ' ') ?? 'Usuario';
+    const firstName = (metadataName || fallbackName).split(/\s+/).filter(Boolean)[0] ?? 'Usuario';
     const normalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
     return (
@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
             <div className="w-full md:flex md:min-w-0 md:flex-1 md:flex-col">
                 <header className="sticky top-0 z-20 flex items-center justify-end border-b border-cyan-400/20 bg-gradient-to-r from-[#031029] via-[#0a1d3f] to-[#0b2b5e] px-4 py-3 md:shrink-0 md:px-8">
                     <ProfileButton
-                        userEmail={user.email ?? 'Signed user'}
+                        userEmail={user.email ?? 'Usuario conectado'}
                         userFirstName={normalizedFirstName}
                     />
                 </header>

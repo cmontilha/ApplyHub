@@ -27,20 +27,20 @@ function getInitialFormState(): CertificationFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
 }
 
-export default function CertificationsPage() {
-    const [certifications, setCertifications] = useState<Certification[]>([]);
+export default function CertificacoesPage() {
+    const [certifications, setCertificacoes] = useState<Certification[]>([]);
     const [formValues, setFormValues] = useState<CertificationFormValues>(getInitialFormState);
     const [loadingList, setLoadingList] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -51,12 +51,12 @@ export default function CertificationsPage() {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    async function loadCertifications() {
+    async function loadCertificacoes() {
         setLoadingList(true);
         setError(null);
         try {
             const data = await parseResponse<Certification[]>(await fetch('/api/certifications'));
-            setCertifications(data);
+            setCertificacoes(data);
         } catch (loadError) {
             setError(getErrorMessage(loadError));
         } finally {
@@ -65,7 +65,7 @@ export default function CertificationsPage() {
     }
 
     useEffect(() => {
-        void loadCertifications();
+        void loadCertificacoes();
     }, []);
 
     async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -86,9 +86,9 @@ export default function CertificationsPage() {
                 })
             );
 
-            setCertifications(current => [created, ...current]);
+            setCertificacoes(current => [created, ...current]);
             setFormValues(getInitialFormState());
-            setSuccessMessage('Certification added.');
+            setSuccessMessage('Certificacao adicionada.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -108,12 +108,12 @@ export default function CertificationsPage() {
         });
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(certificationId: string) {
+    async function saveEditar(certificationId: string) {
         setSavingRowId(certificationId);
         setError(null);
         setSuccessMessage(null);
@@ -130,11 +130,11 @@ export default function CertificationsPage() {
                 })
             );
 
-            setCertifications(current =>
+            setCertificacoes(current =>
                 current.map(item => (item.id === certificationId ? updated : item))
             );
-            cancelEdit();
-            setSuccessMessage('Certification updated.');
+            cancelEditar();
+            setSuccessMessage('Certificacao atualizada.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -143,7 +143,7 @@ export default function CertificationsPage() {
     }
 
     async function handleDelete(certificationId: string) {
-        const confirmed = window.confirm('Delete this certification?');
+        const confirmed = window.confirm('Excluir esta certificacao?');
         if (!confirmed) return;
 
         setDeletingRowId(certificationId);
@@ -154,14 +154,14 @@ export default function CertificationsPage() {
             const response = await fetch(`/api/certifications/${certificationId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
-            setCertifications(current => current.filter(item => item.id !== certificationId));
+            setCertificacoes(current => current.filter(item => item.id !== certificationId));
             if (editingId === certificationId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('Certification removed.');
+            setSuccessMessage('Certificacao removida.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -172,18 +172,18 @@ export default function CertificationsPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Certifications</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Certificacoes</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Keep track of certifications with effort and market value.
+                    Acompanhe certificacoes por esforco e valor de mercado.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Certification</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar certificacao</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
-                            Name *
+                            Nome *
                         </label>
                         <input
                             id="name"
@@ -214,7 +214,7 @@ export default function CertificationsPage() {
 
                     <div>
                         <label className="label" htmlFor="difficulty">
-                            Difficulty
+                            Dificuldade
                         </label>
                         <select
                             id="difficulty"
@@ -227,7 +227,7 @@ export default function CertificationsPage() {
                                 }))
                             }
                         >
-                            <option value="">Select</option>
+                            <option value="">Selecionar</option>
                             {CERT_DIFFICULTY_OPTIONS.map(option => (
                                 <option key={option} value={option}>
                                     {toLabel(option)}
@@ -238,7 +238,7 @@ export default function CertificationsPage() {
 
                     <div>
                         <label className="label" htmlFor="market_recognition">
-                            Market Recognition
+                            Reconhecimento de mercado
                         </label>
                         <input
                             id="market_recognition"
@@ -256,7 +256,7 @@ export default function CertificationsPage() {
 
                     <div>
                         <label className="label" htmlFor="price">
-                            Price
+                            Preco
                         </label>
                         <input
                             id="price"
@@ -273,7 +273,7 @@ export default function CertificationsPage() {
 
                     <div>
                         <label className="label" htmlFor="notes">
-                            Notes
+                            Observacoes
                         </label>
                         <input
                             id="notes"
@@ -289,7 +289,7 @@ export default function CertificationsPage() {
                     <div className="md:col-span-2 xl:col-span-3">
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Add Certification'}
+                            {submitting ? 'Salvando...' : 'Adicionar certificacao'}
                         </button>
                     </div>
                 </form>
@@ -311,14 +311,14 @@ export default function CertificationsPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Nome</th>
                             <th>Area</th>
-                            <th>Difficulty</th>
-                            <th>Market Recognition</th>
-                            <th>Price</th>
-                            <th>Notes</th>
-                            <th>Created</th>
-                            <th>Actions</th>
+                            <th>Dificuldade</th>
+                            <th>Reconhecimento de mercado</th>
+                            <th>Preco</th>
+                            <th>Observacoes</th>
+                            <th>Criado em</th>
+                            <th>Acoes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -326,14 +326,14 @@ export default function CertificationsPage() {
                             <tr>
                                 <td colSpan={8} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading certifications...
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Carregando certificacoes...
                                     </span>
                                 </td>
                             </tr>
                         ) : certifications.length === 0 ? (
                             <tr>
                                 <td colSpan={8} className="py-12 text-center text-slate-400">
-                                    No certifications added.
+                                    Nenhuma certificacao adicionada.
                                 </td>
                             </tr>
                         ) : (
@@ -389,7 +389,7 @@ export default function CertificationsPage() {
                                                         }))
                                                     }
                                                 >
-                                                    <option value="">Select</option>
+                                                    <option value="">Selecionar</option>
                                                     {CERT_DIFFICULTY_OPTIONS.map(option => (
                                                         <option key={option} value={option}>
                                                             {toLabel(option)}
@@ -464,23 +464,23 @@ export default function CertificationsPage() {
                                                             type="button"
                                                             className="btn-primary"
                                                             disabled={rowBusy}
-                                                            onClick={() => saveEdit(certification.id)}
+                                                            onClick={() => saveEditar(certification.id)}
                                                         >
                                                             {savingRowId === certification.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Save className="h-4 w-4" />
                                                             )}
-                                                            Save
+                                                            Salvar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className="btn-secondary"
                                                             disabled={rowBusy}
-                                                            onClick={cancelEdit}
+                                                            onClick={cancelEditar}
                                                         >
                                                             <X className="h-4 w-4" />
-                                                            Cancel
+                                                            Cancelar
                                                         </button>
                                                     </>
                                                 ) : (
@@ -491,7 +491,7 @@ export default function CertificationsPage() {
                                                         onClick={() => startEdit(certification)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
                                                 )}
                                                 <button
@@ -505,7 +505,7 @@ export default function CertificationsPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </div>
                                         </td>

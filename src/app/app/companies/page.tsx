@@ -6,21 +6,21 @@ import { Edit3, Loader2, Save, Trash2, X } from 'lucide-react';
 import type { Company } from '@/types/database';
 
 const POPULAR_INDUSTRIES = [
-    'Tech',
-    'Banking',
-    'Oil & Gas',
-    'Semiconductors',
-    'Retail',
+    'Tecnologia',
+    'Bancos',
+    'Petroleo e gas',
+    'Semicondutores',
+    'Varejo',
     'Telecom',
-    'Healthcare',
-    'Insurance',
-    'Consumer Goods',
-    'Automotive',
-    'Energy',
-    'Chemicals',
-    'Aerospace',
+    'Saude',
+    'Seguros',
+    'Bens de consumo',
+    'Automotivo',
+    'Energia',
+    'Quimica',
+    'Aeroespacial',
     'Materials',
-    'Logistics',
+    'Logistica',
 ] as const;
 
 type CompanyFormValues = {
@@ -31,7 +31,7 @@ type CompanyFormValues = {
     notes: string;
 };
 
-type IndustryMultiSelectProps = {
+type IndustriaMultiSelectProps = {
     id: string;
     values: string[];
     onChange: (nextValues: string[]) => void;
@@ -39,13 +39,13 @@ type IndustryMultiSelectProps = {
     disabled?: boolean;
 };
 
-type IndustryTone = {
+type IndustriaTone = {
     tag: string;
     button: string;
     buttonActive: string;
 };
 
-const INDUSTRY_TONES: IndustryTone[] = [
+const INDUSTRY_TONES: IndustriaTone[] = [
     {
         tag: 'border-sky-300/35 bg-sky-500/15 text-sky-100',
         button: 'border-sky-400/45 bg-sky-500/10 text-sky-100 hover:bg-sky-500/20',
@@ -94,28 +94,42 @@ const INDUSTRY_TONES: IndustryTone[] = [
 
 const INDUSTRY_TONE_BY_KEY: Record<string, number> = {
     tech: 0,
+    tecnologia: 0,
     banking: 1,
+    bancos: 1,
     'oil & gas': 2,
+    'petroleo e gas': 2,
     semiconductors: 3,
+    semicondutores: 3,
     retail: 4,
+    varejo: 4,
     telecom: 5,
     healthcare: 6,
+    saude: 6,
     insurance: 7,
+    seguros: 7,
     'consumer goods': 0,
+    'bens de consumo': 0,
     automotive: 1,
+    automotivo: 1,
     energy: 2,
+    energia: 2,
     chemicals: 3,
+    quimica: 3,
     aerospace: 4,
+    aeroespacial: 4,
     materials: 5,
+    materiais: 5,
     logistics: 6,
+    logistica: 6,
 };
 
-function normalizeIndustry(value: string) {
+function normalizeIndustria(value: string) {
     return value.trim().toLocaleLowerCase();
 }
 
-function getIndustryTone(industry: string): IndustryTone {
-    const key = normalizeIndustry(industry);
+function getIndustriaTone(industry: string): IndustriaTone {
+    const key = normalizeIndustria(industry);
     const mappedIndex = INDUSTRY_TONE_BY_KEY[key];
 
     if (mappedIndex !== undefined) {
@@ -132,7 +146,7 @@ function getIndustryTone(industry: string): IndustryTone {
     return INDUSTRY_TONES[toneIndex];
 }
 
-function sanitizeIndustryList(values: string[] | null | undefined) {
+function sanitizeIndustriaList(values: string[] | null | undefined) {
     if (!Array.isArray(values)) return [];
 
     const seen = new Set<string>();
@@ -144,7 +158,7 @@ function sanitizeIndustryList(values: string[] | null | undefined) {
         const trimmed = value.trim();
         if (!trimmed) continue;
 
-        const normalized = normalizeIndustry(trimmed);
+        const normalized = normalizeIndustria(trimmed);
         if (seen.has(normalized)) continue;
 
         seen.add(normalized);
@@ -154,15 +168,15 @@ function sanitizeIndustryList(values: string[] | null | undefined) {
     return sanitized;
 }
 
-function toNullableIndustryList(values: string[] | null | undefined) {
-    const sanitized = sanitizeIndustryList(values);
+function toNullableIndustriaList(values: string[] | null | undefined) {
+    const sanitized = sanitizeIndustriaList(values);
     return sanitized.length > 0 ? sanitized : null;
 }
 
 function normalizeCompany(company: Company): Company {
     return {
         ...company,
-        industries: toNullableIndustryList(company.industries),
+        industries: toNullableIndustriaList(company.industries),
     };
 }
 
@@ -178,7 +192,7 @@ function getInitialFormState(): CompanyFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 function toSafeExternalUrl(value: string | null) {
@@ -200,35 +214,35 @@ function toSafeExternalUrl(value: string | null) {
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
 }
 
-function IndustryMultiSelect({
+function IndustriaMultiSelect({
     id,
     values,
     onChange,
-    placeholder = 'Select or add industries...',
+    placeholder = 'Selecione ou adicione industrias...',
     disabled = false,
-}: IndustryMultiSelectProps) {
+}: IndustriaMultiSelectProps) {
     const [query, setQuery] = useState('');
-    const [open, setOpen] = useState(false);
+    const [open, setAbrir] = useState(false);
     const rootRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const selectedSet = useMemo(
-        () => new Set(values.map(item => normalizeIndustry(item))),
+        () => new Set(values.map(item => normalizeIndustria(item))),
         [values]
     );
 
-    const normalizedQuery = normalizeIndustry(query);
+    const normalizedQuery = normalizeIndustria(query);
     const trimmedQuery = query.trim();
 
     const suggestions = useMemo(() => {
         return POPULAR_INDUSTRIES.filter(item => {
-            const normalizedItem = normalizeIndustry(item);
+            const normalizedItem = normalizeIndustria(item);
             if (selectedSet.has(normalizedItem)) return false;
             if (!normalizedQuery) return true;
             return normalizedItem.includes(normalizedQuery);
@@ -236,10 +250,10 @@ function IndustryMultiSelect({
     }, [normalizedQuery, selectedSet]);
 
     const hasExactSuggestionMatch = useMemo(() => {
-        return POPULAR_INDUSTRIES.some(item => normalizeIndustry(item) === normalizedQuery);
+        return POPULAR_INDUSTRIES.some(item => normalizeIndustria(item) === normalizedQuery);
     }, [normalizedQuery]);
 
-    const canAddCustom =
+    const canAddPersonalizado =
         trimmedQuery.length > 0 &&
         !selectedSet.has(normalizedQuery) &&
         !hasExactSuggestionMatch;
@@ -249,7 +263,7 @@ function IndustryMultiSelect({
 
         const handlePointerDownOutside = (event: MouseEvent) => {
             if (!rootRef.current?.contains(event.target as Node)) {
-                setOpen(false);
+                setAbrir(false);
             }
         };
 
@@ -257,11 +271,11 @@ function IndustryMultiSelect({
         return () => window.removeEventListener('mousedown', handlePointerDownOutside);
     }, [open]);
 
-    function addIndustry(rawValue: string) {
+    function addIndustria(rawValue: string) {
         const trimmed = rawValue.trim();
         if (!trimmed) return;
 
-        const normalized = normalizeIndustry(trimmed);
+        const normalized = normalizeIndustria(trimmed);
         if (selectedSet.has(normalized)) {
             setQuery('');
             return;
@@ -269,16 +283,16 @@ function IndustryMultiSelect({
 
         onChange([...values, trimmed]);
         setQuery('');
-        setOpen(true);
+        setAbrir(true);
 
         requestAnimationFrame(() => {
             inputRef.current?.focus();
         });
     }
 
-    function removeIndustry(valueToRemove: string) {
-        const normalizedToRemove = normalizeIndustry(valueToRemove);
-        onChange(values.filter(item => normalizeIndustry(item) !== normalizedToRemove));
+    function removeIndustria(valueToRemove: string) {
+        const normalizedToRemove = normalizeIndustria(valueToRemove);
+        onChange(values.filter(item => normalizeIndustria(item) !== normalizedToRemove));
     }
 
     function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -287,23 +301,23 @@ function IndustryMultiSelect({
 
             event.preventDefault();
             if (suggestions.length > 0) {
-                addIndustry(suggestions[0]);
+                addIndustria(suggestions[0]);
                 return;
             }
 
-            if (canAddCustom) {
-                addIndustry(trimmedQuery);
+            if (canAddPersonalizado) {
+                addIndustria(trimmedQuery);
             }
             return;
         }
 
         if (event.key === 'Backspace' && !query && values.length > 0) {
-            removeIndustry(values[values.length - 1]);
+            removeIndustria(values[values.length - 1]);
             return;
         }
 
         if (event.key === 'Escape') {
-            setOpen(false);
+            setAbrir(false);
         }
     }
 
@@ -315,7 +329,7 @@ function IndustryMultiSelect({
                 } ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
                 onClick={() => {
                     if (disabled) return;
-                    setOpen(true);
+                    setAbrir(true);
                     inputRef.current?.focus();
                 }}
             >
@@ -330,9 +344,9 @@ function IndustryMultiSelect({
                             className="rounded-full p-0.5 text-cyan-100/80 hover:bg-cyan-400/20 hover:text-white"
                             onClick={event => {
                                 event.stopPropagation();
-                                removeIndustry(industry);
+                                removeIndustria(industry);
                             }}
-                            aria-label={`Remove ${industry}`}
+                            aria-label={`Remover ${industry}`}
                             disabled={disabled}
                         >
                             <X className="h-3 w-3" />
@@ -346,10 +360,10 @@ function IndustryMultiSelect({
                     type="text"
                     className="min-w-[120px] flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 outline-none"
                     value={query}
-                    onFocus={() => setOpen(true)}
+                    onFocus={() => setAbrir(true)}
                     onChange={event => {
                         setQuery(event.target.value);
-                        setOpen(true);
+                        setAbrir(true);
                     }}
                     onKeyDown={onKeyDown}
                     placeholder={placeholder}
@@ -366,27 +380,27 @@ function IndustryMultiSelect({
                                 type="button"
                                 className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-cyan-500/15 hover:text-cyan-100"
                                 onMouseDown={event => event.preventDefault()}
-                                onClick={() => addIndustry(industry)}
+                                onClick={() => addIndustria(industry)}
                             >
                                 <span>{industry}</span>
                                 <span className="text-xs text-slate-400">Popular</span>
                             </button>
                         ))}
 
-                        {canAddCustom ? (
+                        {canAddPersonalizado ? (
                             <button
                                 type="button"
                                 className="flex w-full items-center justify-between border-t border-slate-700 px-3 py-2 text-left text-sm text-emerald-200 transition-colors hover:bg-emerald-500/15"
                                 onMouseDown={event => event.preventDefault()}
-                                onClick={() => addIndustry(trimmedQuery)}
+                                onClick={() => addIndustria(trimmedQuery)}
                             >
-                                <span>{`Add "${trimmedQuery}"`}</span>
-                                <span className="text-xs text-emerald-300/80">Custom</span>
+                                <span>{`Adicionar "${trimmedQuery}"`}</span>
+                                <span className="text-xs text-emerald-300/80">Personalizado</span>
                             </button>
                         ) : null}
 
-                        {suggestions.length === 0 && !canAddCustom ? (
-                            <p className="px-3 py-2 text-sm text-slate-400">No matching industries.</p>
+                        {suggestions.length === 0 && !canAddPersonalizado ? (
+                            <p className="px-3 py-2 text-sm text-slate-400">Nenhuma industria correspondente.</p>
                         ) : null}
                     </div>
                 </div>
@@ -395,8 +409,8 @@ function IndustryMultiSelect({
     );
 }
 
-export default function CompaniesPage() {
-    const [companies, setCompanies] = useState<Company[]>([]);
+export default function EmpresasPage() {
+    const [companies, setEmpresas] = useState<Company[]>([]);
     const [formValues, setFormValues] = useState<CompanyFormValues>(getInitialFormState);
     const [loadingList, setLoadingList] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -406,14 +420,14 @@ export default function CompaniesPage() {
     const [editingValues, setEditingValues] = useState<CompanyFormValues>(getInitialFormState);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+    const [industryFilter, setIndustriaFilter] = useState<string | null>(null);
 
     const industryFilterOptions = useMemo(() => {
         const mapped = new Map<string, { label: string; count: number }>();
 
         for (const company of companies) {
-            for (const industry of sanitizeIndustryList(company.industries)) {
-                const normalized = normalizeIndustry(industry);
+            for (const industry of sanitizeIndustriaList(company.industries)) {
+                const normalized = normalizeIndustria(industry);
                 const existing = mapped.get(normalized);
 
                 if (existing) {
@@ -436,13 +450,13 @@ export default function CompaniesPage() {
             });
     }, [companies]);
 
-    const filteredCompanies = useMemo(() => {
+    const filteredEmpresas = useMemo(() => {
         if (!industryFilter) return companies;
 
-        const normalizedFilter = normalizeIndustry(industryFilter);
+        const normalizedFilter = normalizeIndustria(industryFilter);
         return companies.filter(company =>
-            sanitizeIndustryList(company.industries).some(
-                industry => normalizeIndustry(industry) === normalizedFilter
+            sanitizeIndustriaList(company.industries).some(
+                industry => normalizeIndustria(industry) === normalizedFilter
             )
         );
     }, [companies, industryFilter]);
@@ -451,20 +465,20 @@ export default function CompaniesPage() {
         if (!industryFilter) return;
 
         const stillAvailable = industryFilterOptions.some(
-            option => option.normalized === normalizeIndustry(industryFilter)
+            option => option.normalized === normalizeIndustria(industryFilter)
         );
 
         if (!stillAvailable) {
-            setIndustryFilter(null);
+            setIndustriaFilter(null);
         }
     }, [industryFilter, industryFilterOptions]);
 
-    async function loadCompanies() {
+    async function loadEmpresas() {
         setLoadingList(true);
         setError(null);
         try {
             const data = await parseResponse<Company[]>(await fetch('/api/companies'));
-            setCompanies(data.map(normalizeCompany));
+            setEmpresas(data.map(normalizeCompany));
         } catch (loadError) {
             setError(getErrorMessage(loadError));
         } finally {
@@ -473,7 +487,7 @@ export default function CompaniesPage() {
     }
 
     useEffect(() => {
-        void loadCompanies();
+        void loadEmpresas();
     }, []);
 
     async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -493,9 +507,9 @@ export default function CompaniesPage() {
                 )
             );
 
-            setCompanies(current => [created, ...current]);
+            setEmpresas(current => [created, ...current]);
             setFormValues(getInitialFormState());
-            setSuccessMessage('Company added.');
+            setSuccessMessage('Empresa adicionada.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -508,18 +522,18 @@ export default function CompaniesPage() {
         setEditingValues({
             name: company.name,
             website_url: company.website_url ?? '',
-            industries: sanitizeIndustryList(company.industries),
+            industries: sanitizeIndustriaList(company.industries),
             contacts: company.contacts ?? '',
             notes: company.notes ?? '',
         });
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(companyId: string) {
+    async function saveEditar(companyId: string) {
         setSavingRowId(companyId);
         setError(null);
         setSuccessMessage(null);
@@ -535,9 +549,9 @@ export default function CompaniesPage() {
                 )
             );
 
-            setCompanies(current => current.map(item => (item.id === companyId ? updated : item)));
-            cancelEdit();
-            setSuccessMessage('Company updated.');
+            setEmpresas(current => current.map(item => (item.id === companyId ? updated : item)));
+            cancelEditar();
+            setSuccessMessage('Empresa atualizada.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -546,7 +560,7 @@ export default function CompaniesPage() {
     }
 
     async function handleDelete(companyId: string) {
-        const confirmed = window.confirm('Delete this company?');
+        const confirmed = window.confirm('Excluir esta empresa?');
         if (!confirmed) return;
 
         setDeletingRowId(companyId);
@@ -557,14 +571,14 @@ export default function CompaniesPage() {
             const response = await fetch(`/api/companies/${companyId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
-            setCompanies(current => current.filter(item => item.id !== companyId));
+            setEmpresas(current => current.filter(item => item.id !== companyId));
             if (editingId === companyId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('Company removed.');
+            setSuccessMessage('Empresa removida.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -575,16 +589,16 @@ export default function CompaniesPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Companies</h2>
-                <p className="mt-1 text-sm text-slate-300">Maintain your target companies watchlist.</p>
+                <h2 className="text-2xl font-bold text-slate-100">Empresas</h2>
+                <p className="mt-1 text-sm text-slate-300">Mantenha sua lista de empresas-alvo.</p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Company</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar empresa</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
-                            Name *
+                            Nome *
                         </label>
                         <input
                             id="name"
@@ -600,7 +614,7 @@ export default function CompaniesPage() {
 
                     <div>
                         <label className="label" htmlFor="website_url">
-                            Website
+                            Site
                         </label>
                         <input
                             id="website_url"
@@ -616,7 +630,7 @@ export default function CompaniesPage() {
 
                     <div>
                         <label className="label" htmlFor="contacts">
-                            Contacts
+                            Contatos
                         </label>
                         <input
                             id="contacts"
@@ -631,7 +645,7 @@ export default function CompaniesPage() {
 
                     <div>
                         <label className="label" htmlFor="notes">
-                            Notes
+                            Observacoes
                         </label>
                         <input
                             id="notes"
@@ -646,22 +660,22 @@ export default function CompaniesPage() {
 
                     <div className="md:col-span-2 xl:col-span-4">
                         <label className="label" htmlFor="industries">
-                            Industry
+                            Industria
                         </label>
-                        <IndustryMultiSelect
+                        <IndustriaMultiSelect
                             id="industries"
                             values={formValues.industries}
                             onChange={nextValues =>
                                 setFormValues(current => ({ ...current, industries: nextValues }))
                             }
-                            placeholder="Click to see suggestions or type to search..."
+                            placeholder="Clique para ver sugestoes ou digite para buscar..."
                         />
                     </div>
 
                     <div className="md:col-span-2 xl:col-span-4">
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Add Company'}
+                            {submitting ? 'Salvando...' : 'Adicionar empresa'}
                         </button>
                     </div>
                 </form>
@@ -682,18 +696,18 @@ export default function CompaniesPage() {
             <div className="card p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-100">Filter by industry</h3>
+                        <h3 className="text-sm font-semibold text-slate-100">Filtrar por industria</h3>
                         <p className="text-xs text-slate-400">
-                            Click one industry to show only related companies.
+                            Clique em uma industria para ver apenas empresas relacionadas.
                         </p>
                     </div>
                     {industryFilter ? (
                         <button
                             type="button"
                             className="btn-secondary !px-3 !py-1.5 text-xs"
-                            onClick={() => setIndustryFilter(null)}
+                            onClick={() => setIndustriaFilter(null)}
                         >
-                            Clear filter
+                            Limpar filtro
                         </button>
                     ) : null}
                 </div>
@@ -706,19 +720,19 @@ export default function CompaniesPage() {
                                 ? 'border-cyan-300/80 bg-cyan-400/30 text-cyan-50'
                                 : 'border-slate-600 bg-slate-900/70 text-slate-200 hover:border-cyan-400/40 hover:bg-slate-800'
                         }`}
-                        onClick={() => setIndustryFilter(null)}
+                        onClick={() => setIndustriaFilter(null)}
                     >
-                        All industries
+                        Todas as industrias
                         <span className="rounded-full bg-slate-950/45 px-2 py-0.5 text-[11px] text-slate-200">
                             {companies.length}
                         </span>
                     </button>
 
                     {industryFilterOptions.map(option => {
-                        const tone = getIndustryTone(option.label);
+                        const tone = getIndustriaTone(option.label);
                         const isActive =
                             industryFilter !== null &&
-                            normalizeIndustry(industryFilter) === option.normalized;
+                            normalizeIndustria(industryFilter) === option.normalized;
 
                         return (
                             <button
@@ -728,8 +742,8 @@ export default function CompaniesPage() {
                                     isActive ? tone.buttonActive : tone.button
                                 }`}
                                 onClick={() =>
-                                    setIndustryFilter(current =>
-                                        current && normalizeIndustry(current) === option.normalized
+                                    setIndustriaFilter(current =>
+                                        current && normalizeIndustria(current) === option.normalized
                                             ? null
                                             : option.label
                                     )
@@ -749,13 +763,13 @@ export default function CompaniesPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Website</th>
-                            <th>Industries</th>
-                            <th>Contacts</th>
-                            <th>Notes</th>
-                            <th>Created</th>
-                            <th>Actions</th>
+                            <th>Nome</th>
+                            <th>Site</th>
+                            <th>Industrias</th>
+                            <th>Contatos</th>
+                            <th>Observacoes</th>
+                            <th>Criado em</th>
+                            <th>Acoes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -763,24 +777,24 @@ export default function CompaniesPage() {
                             <tr>
                                 <td colSpan={7} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading companies...
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Carregando empresas...
                                     </span>
                                 </td>
                             </tr>
-                        ) : filteredCompanies.length === 0 ? (
+                        ) : filteredEmpresas.length === 0 ? (
                             <tr>
                                 <td colSpan={7} className="py-12 text-center text-slate-400">
                                     {industryFilter
-                                        ? `No companies found for industry "${industryFilter}".`
-                                        : 'No companies added.'}
+                                        ? `Nenhuma empresa encontrada para a industria "${industryFilter}".`
+                                        : 'Nenhuma empresa adicionada.'}
                                 </td>
                             </tr>
                         ) : (
-                            filteredCompanies.map(company => {
+                            filteredEmpresas.map(company => {
                                 const rowBusy = savingRowId === company.id || deletingRowId === company.id;
                                 const isEditing = editingId === company.id;
-                                const safeWebsiteUrl = toSafeExternalUrl(company.website_url);
-                                const companyIndustries = sanitizeIndustryList(company.industries);
+                                const safeSiteUrl = toSafeExternalUrl(company.website_url);
+                                const companyIndustrias = sanitizeIndustriaList(company.industries);
 
                                 return (
                                     <tr key={company.id}>
@@ -812,14 +826,14 @@ export default function CompaniesPage() {
                                                         }))
                                                     }
                                                 />
-                                            ) : safeWebsiteUrl ? (
+                                            ) : safeSiteUrl ? (
                                                 <Link
-                                                    href={safeWebsiteUrl}
+                                                    href={safeSiteUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-cyan-300 hover:underline"
                                                 >
-                                                    Open
+                                                    Abrir
                                                 </Link>
                                             ) : (
                                                 '-'
@@ -828,7 +842,7 @@ export default function CompaniesPage() {
                                         <td>
                                             {isEditing ? (
                                                 <div className="min-w-[270px]">
-                                                    <IndustryMultiSelect
+                                                    <IndustriaMultiSelect
                                                         id={`industry-${company.id}`}
                                                         values={editingValues.industries}
                                                         onChange={nextValues =>
@@ -837,16 +851,16 @@ export default function CompaniesPage() {
                                                                 industries: nextValues,
                                                             }))
                                                         }
-                                                        placeholder="Select or add..."
+                                                        placeholder="Selecionar ou adicionar..."
                                                         disabled={rowBusy}
                                                     />
                                                 </div>
-                                            ) : companyIndustries.length > 0 ? (
+                                            ) : companyIndustrias.length > 0 ? (
                                                 <div className="flex min-w-[240px] flex-wrap gap-1.5">
-                                                    {companyIndustries.map(industry => (
+                                                    {companyIndustrias.map(industry => (
                                                         <span
                                                             key={industry}
-                                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${getIndustryTone(industry).tag}`}
+                                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${getIndustriaTone(industry).tag}`}
                                                         >
                                                             {industry}
                                                         </span>
@@ -897,23 +911,23 @@ export default function CompaniesPage() {
                                                             type="button"
                                                             className="btn-primary"
                                                             disabled={rowBusy}
-                                                            onClick={() => saveEdit(company.id)}
+                                                            onClick={() => saveEditar(company.id)}
                                                         >
                                                             {savingRowId === company.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Save className="h-4 w-4" />
                                                             )}
-                                                            Save
+                                                            Salvar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className="btn-secondary"
                                                             disabled={rowBusy}
-                                                            onClick={cancelEdit}
+                                                            onClick={cancelEditar}
                                                         >
                                                             <X className="h-4 w-4" />
-                                                            Cancel
+                                                            Cancelar
                                                         </button>
                                                     </>
                                                 ) : (
@@ -924,7 +938,7 @@ export default function CompaniesPage() {
                                                         onClick={() => startEdit(company)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
                                                 )}
                                                 <button
@@ -938,7 +952,7 @@ export default function CompaniesPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </div>
                                         </td>

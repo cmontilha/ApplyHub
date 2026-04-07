@@ -16,13 +16,13 @@ type DriveFileItem = {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
@@ -82,9 +82,9 @@ export default function DrivePage() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const fileCountLabel = useMemo(() => {
-        if (files.length === 0) return 'No files uploaded yet.';
-        if (files.length === 1) return '1 file uploaded.';
-        return `${files.length} files uploaded.`;
+        if (files.length === 0) return 'Nenhum arquivo enviado ainda.';
+        if (files.length === 1) return '1 arquivo enviado.';
+        return `${files.length} arquivos enviados.`;
     }, [files.length]);
 
     async function loadFiles(showLoader = true) {
@@ -118,7 +118,7 @@ export default function DrivePage() {
 
         const file = fileInputRef.current?.files?.[0];
         if (!file) {
-            setError('Choose an image or PDF file first.');
+            setError('Escolha uma imagem ou PDF primeiro.');
             return;
         }
 
@@ -142,7 +142,7 @@ export default function DrivePage() {
                 fileInputRef.current.value = '';
             }
             setSelectedFileName('');
-            setSuccessMessage('File uploaded to Drive.');
+            setSuccessMessage('Arquivo enviado.');
         } catch (uploadError) {
             setError(getErrorMessage(uploadError));
         } finally {
@@ -151,7 +151,7 @@ export default function DrivePage() {
     }
 
     async function handleDelete(fileId: string) {
-        const confirmed = window.confirm('Delete this file?');
+        const confirmed = window.confirm('Excluir este arquivo?');
         if (!confirmed) return;
 
         setDeletingId(fileId);
@@ -165,11 +165,11 @@ export default function DrivePage() {
 
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setFiles(current => current.filter(item => item.id !== fileId));
-            setSuccessMessage('File deleted.');
+            setSuccessMessage('Arquivo excluido.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -180,18 +180,18 @@ export default function DrivePage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Drive</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Arquivos</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Upload and organize images or PDFs in one place with visual preview cards.
+                    Envie e organize imagens ou PDFs em um so lugar com visualizacao em cards.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-3 text-sm font-semibold text-slate-100">Upload to Drive</h3>
+                <h3 className="mb-3 text-sm font-semibold text-slate-100">Enviar arquivo</h3>
                 <form className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={handleUpload}>
                     <div>
                         <label htmlFor="drive-file" className="label">
-                            Image or PDF file (max 20MB)
+                            Arquivo de imagem ou PDF (max. 20 MB)
                         </label>
                         <input
                             ref={fileInputRef}
@@ -204,7 +204,7 @@ export default function DrivePage() {
                             }
                         />
                         <p className="mt-2 text-xs text-slate-400">
-                            {selectedFileName ? `Selected: ${selectedFileName}` : 'No file selected.'}
+                            {selectedFileName ? `Selecionado: ${selectedFileName}` : 'Nenhum arquivo selecionado.'}
                         </p>
                     </div>
 
@@ -215,7 +215,7 @@ export default function DrivePage() {
                             ) : (
                                 <Upload className="h-4 w-4" />
                             )}
-                            {uploading ? 'Uploading...' : 'Upload File'}
+                            {uploading ? 'Enviando...' : 'Enviar arquivo'}
                         </button>
                     </div>
                 </form>
@@ -235,7 +235,7 @@ export default function DrivePage() {
 
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Drive Files</h3>
+                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Arquivos salvos</h3>
                     <div className="flex items-center gap-2">
                         <p className="text-xs text-slate-400">{fileCountLabel}</p>
                         {files.length > 0 ? (
@@ -250,7 +250,7 @@ export default function DrivePage() {
                                 ) : (
                                     <RefreshCw className="h-4 w-4" />
                                 )}
-                                {refreshingLinks ? 'Refreshing...' : 'Refresh Links'}
+                                {refreshingLinks ? 'Atualizando...' : 'Atualizar links'}
                             </button>
                         ) : null}
                     </div>
@@ -260,12 +260,12 @@ export default function DrivePage() {
                     <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
                         <span className="inline-flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading drive files...
+                            Carregando arquivos...
                         </span>
                     </div>
                 ) : files.length === 0 ? (
                     <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
-                        No files uploaded yet.
+                        Nenhum arquivo enviado ainda.
                     </div>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -312,7 +312,7 @@ export default function DrivePage() {
 
                                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/15 to-transparent" />
                                         <p className="pointer-events-none absolute bottom-2 left-3 text-[11px] font-medium uppercase tracking-wide text-cyan-100/90">
-                                            {isPdf ? 'PDF Preview' : isImage ? 'Image Preview' : 'File Preview'}
+                                            {isPdf ? 'Previa de PDF' : isImage ? 'Previa de imagem' : 'Previa do arquivo'}
                                         </p>
                                     </div>
 
@@ -327,7 +327,7 @@ export default function DrivePage() {
                                         </div>
 
                                         <p className="text-xs text-slate-400">
-                                            Uploaded on {new Date(item.created_at).toLocaleDateString()}
+                                            Enviado em {new Date(item.created_at).toLocaleDateString()}
                                         </p>
 
                                         <div className="flex flex-wrap items-center gap-2">
@@ -339,7 +339,7 @@ export default function DrivePage() {
                                                     className="btn-primary"
                                                 >
                                                     <ExternalLink className="h-4 w-4" />
-                                                    Open
+                                                    Abrir
                                                 </a>
                                             ) : (
                                                 <button
@@ -348,7 +348,7 @@ export default function DrivePage() {
                                                     onClick={() => void loadFiles(false)}
                                                 >
                                                     <RefreshCw className="h-4 w-4" />
-                                                    Refresh Link
+                                                    Atualizar link
                                                 </button>
                                             )}
 
@@ -363,7 +363,7 @@ export default function DrivePage() {
                                                 ) : (
                                                     <Trash2 className="h-4 w-4" />
                                                 )}
-                                                Delete
+                                                Excluir
                                             </button>
                                         </div>
                                     </div>

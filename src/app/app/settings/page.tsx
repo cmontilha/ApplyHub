@@ -7,10 +7,10 @@ import { createClient } from '@/lib/supabase/client';
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
-export default function SettingsPage() {
+export default function ConfiguracoesPage() {
     const router = useRouter();
     const supabase = createClient();
 
@@ -56,12 +56,12 @@ export default function SettingsPage() {
         setEmailSuccess('');
 
         if (!newEmail || !newEmail.includes('@')) {
-            setEmailError('Please enter a valid email.');
+            setEmailError('Digite um email valido.');
             return;
         }
 
         if (newEmail === currentEmail) {
-            setEmailError('Enter a different email to update.');
+            setEmailError('Digite um email diferente para atualizar.');
             return;
         }
 
@@ -80,7 +80,7 @@ export default function SettingsPage() {
                 return;
             }
 
-            setEmailSuccess('Confirmation email sent. Check inbox to complete email change.');
+            setEmailSuccess('Email de confirmacao enviado. Verifique sua caixa de entrada para concluir a troca.');
         } catch (error) {
             setEmailError(getErrorMessage(error));
         } finally {
@@ -94,22 +94,22 @@ export default function SettingsPage() {
         setPasswordSuccess('');
 
         if (!currentPassword) {
-            setPasswordError('Current password is required.');
+            setPasswordError('A senha atual e obrigatoria.');
             return;
         }
 
         if (newPassword.length < 6) {
-            setPasswordError('Password must be at least 6 characters.');
+            setPasswordError('A senha precisa ter pelo menos 6 caracteres.');
             return;
         }
 
         if (!currentEmail) {
-            setPasswordError('Could not verify your account email.');
+            setPasswordError('Nao foi possivel validar o email da sua conta.');
             return;
         }
 
         if (newPassword === currentPassword) {
-            setPasswordError('New password must be different from current password.');
+            setPasswordError('A nova senha precisa ser diferente da senha atual.');
             return;
         }
 
@@ -122,7 +122,7 @@ export default function SettingsPage() {
             });
 
             if (verifyError) {
-                setPasswordError('Current password is incorrect.');
+                setPasswordError('A senha atual esta incorreta.');
                 return;
             }
 
@@ -135,7 +135,7 @@ export default function SettingsPage() {
 
             setCurrentPassword('');
             setNewPassword('');
-            setPasswordSuccess('Password updated successfully.');
+            setPasswordSuccess('Senha atualizada com sucesso.');
         } catch (error) {
             setPasswordError(getErrorMessage(error));
         } finally {
@@ -148,7 +148,7 @@ export default function SettingsPage() {
             <section className="card flex min-h-[220px] items-center justify-center">
                 <span className="inline-flex items-center gap-2 text-slate-300">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading settings...
+                    Carregando configuracoes...
                 </span>
             </section>
         );
@@ -157,17 +157,17 @@ export default function SettingsPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Settings</h2>
-                <p className="mt-1 text-sm text-slate-300">Update your account credentials securely.</p>
+                <h2 className="text-2xl font-bold text-slate-100">Configuracoes</h2>
+                <p className="mt-1 text-sm text-slate-300">Atualize os dados da sua conta com seguranca.</p>
             </header>
 
             <article className="card p-5">
                 <div className="mb-4 flex items-center gap-2">
                     <Mail className="h-4 w-4 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-slate-100">Change Email</h3>
+                    <h3 className="text-sm font-semibold text-slate-100">Alterar email</h3>
                 </div>
 
-                <p className="mb-4 text-xs text-slate-400">Current email: {currentEmail}</p>
+                <p className="mb-4 text-xs text-slate-400">Email atual: {currentEmail}</p>
 
                 {emailError ? (
                     <p className="mb-3 rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                 <form onSubmit={handleUpdateEmail} className="space-y-3">
                     <div>
                         <label className="label" htmlFor="new-email">
-                            New Email
+                            Novo email
                         </label>
                         <input
                             id="new-email"
@@ -198,7 +198,7 @@ export default function SettingsPage() {
 
                     <button type="submit" className="btn-primary" disabled={updatingEmail}>
                         {updatingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                        {updatingEmail ? 'Updating...' : 'Update Email'}
+                        {updatingEmail ? 'Atualizando...' : 'Atualizar email'}
                     </button>
                 </form>
             </article>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
             <article className="card p-5">
                 <div className="mb-4 flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-slate-100">Change Password</h3>
+                    <h3 className="text-sm font-semibold text-slate-100">Alterar senha</h3>
                 </div>
 
                 {passwordError ? (
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                 <form onSubmit={handleUpdatePassword} className="space-y-3">
                     <div>
                         <label className="label" htmlFor="current-password">
-                            Current Password
+                            Senha atual
                         </label>
                         <input
                             id="current-password"
@@ -232,14 +232,14 @@ export default function SettingsPage() {
                             className="input"
                             value={currentPassword}
                             onChange={event => setCurrentPassword(event.target.value)}
-                            placeholder="Your current password"
+                            placeholder="Sua senha atual"
                             required
                         />
                     </div>
 
                     <div>
                         <label className="label" htmlFor="new-password">
-                            New Password
+                            Nova senha
                         </label>
                         <input
                             id="new-password"
@@ -247,14 +247,14 @@ export default function SettingsPage() {
                             className="input"
                             value={newPassword}
                             onChange={event => setNewPassword(event.target.value)}
-                            placeholder="Minimum 6 characters"
+                            placeholder="Minimo 6 caracteres"
                             required
                         />
                     </div>
 
                     <button type="submit" className="btn-primary" disabled={updatingPassword}>
                         {updatingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                        {updatingPassword ? 'Updating...' : 'Update Password'}
+                        {updatingPassword ? 'Atualizando...' : 'Atualizar senha'}
                     </button>
                 </form>
             </article>

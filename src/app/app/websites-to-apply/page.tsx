@@ -22,7 +22,7 @@ function getInitialFormState(): WebsiteToApplyFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 function toSafeExternalUrl(value: string | null) {
@@ -44,7 +44,7 @@ function toSafeExternalUrl(value: string | null) {
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
@@ -96,7 +96,7 @@ export default function WebsitesToApplyPage() {
 
             setWebsites(current => [created, ...current]);
             setFormValues(getInitialFormState());
-            setSuccessMessage('Website added.');
+            setSuccessMessage('Site adicionado.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -113,12 +113,12 @@ export default function WebsitesToApplyPage() {
         });
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(websiteId: string) {
+    async function saveEditar(websiteId: string) {
         setSavingRowId(websiteId);
         setError(null);
         setSuccessMessage(null);
@@ -133,8 +133,8 @@ export default function WebsitesToApplyPage() {
             );
 
             setWebsites(current => current.map(item => (item.id === websiteId ? updated : item)));
-            cancelEdit();
-            setSuccessMessage('Website updated.');
+            cancelEditar();
+            setSuccessMessage('Site atualizado.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -143,7 +143,7 @@ export default function WebsitesToApplyPage() {
     }
 
     async function handleDelete(websiteId: string) {
-        const confirmed = window.confirm('Delete this website?');
+        const confirmed = window.confirm('Excluir este site?');
         if (!confirmed) return;
 
         setDeletingRowId(websiteId);
@@ -154,14 +154,14 @@ export default function WebsitesToApplyPage() {
             const response = await fetch(`/api/websites-to-apply/${websiteId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setWebsites(current => current.filter(item => item.id !== websiteId));
             if (editingId === websiteId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('Website removed.');
+            setSuccessMessage('Site removido.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -172,18 +172,18 @@ export default function WebsitesToApplyPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Websites To Apply</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Sites para aplicar</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Save job websites by scope (both, nacional, internacional) to speed up applications.
+                    Salve sites de vagas por escopo (nacional, internacional ou ambos) para acelerar candidaturas.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Website</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar site</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
-                            Name *
+                            Nome *
                         </label>
                         <input
                             id="name"
@@ -199,7 +199,7 @@ export default function WebsitesToApplyPage() {
 
                     <div>
                         <label className="label" htmlFor="website_url">
-                            Website URL *
+                            URL do site *
                         </label>
                         <input
                             id="website_url"
@@ -216,7 +216,7 @@ export default function WebsitesToApplyPage() {
 
                     <div>
                         <label className="label" htmlFor="type">
-                            Type
+                            Tipo
                         </label>
                         <select
                             id="type"
@@ -240,7 +240,7 @@ export default function WebsitesToApplyPage() {
                     <div className="md:col-span-2 xl:col-span-3">
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Add Website'}
+                            {submitting ? 'Salvando...' : 'Adicionar site'}
                         </button>
                     </div>
                 </form>
@@ -262,11 +262,11 @@ export default function WebsitesToApplyPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Website</th>
-                            <th>Type</th>
-                            <th>Created</th>
-                            <th>Actions</th>
+                            <th>Nome</th>
+                            <th>Site</th>
+                            <th>Tipo</th>
+                            <th>Criado em</th>
+                            <th>Acoes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -274,14 +274,14 @@ export default function WebsitesToApplyPage() {
                             <tr>
                                 <td colSpan={5} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading websites...
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Carregando sites...
                                     </span>
                                 </td>
                             </tr>
                         ) : websites.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="py-12 text-center text-slate-400">
-                                    No websites added.
+                                    Nenhum site adicionado.
                                 </td>
                             </tr>
                         ) : (
@@ -327,7 +327,7 @@ export default function WebsitesToApplyPage() {
                                                     rel="noopener noreferrer"
                                                     className="text-cyan-300 hover:underline"
                                                 >
-                                                    Open
+                                                    Abrir
                                                 </Link>
                                             ) : (
                                                 website.website_url
@@ -364,23 +364,23 @@ export default function WebsitesToApplyPage() {
                                                             type="button"
                                                             className="btn-primary"
                                                             disabled={rowBusy}
-                                                            onClick={() => saveEdit(website.id)}
+                                                            onClick={() => saveEditar(website.id)}
                                                         >
                                                             {savingRowId === website.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Save className="h-4 w-4" />
                                                             )}
-                                                            Save
+                                                            Salvar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className="btn-secondary"
                                                             disabled={rowBusy}
-                                                            onClick={cancelEdit}
+                                                            onClick={cancelEditar}
                                                         >
                                                             <X className="h-4 w-4" />
-                                                            Cancel
+                                                            Cancelar
                                                         </button>
                                                     </>
                                                 ) : (
@@ -391,7 +391,7 @@ export default function WebsitesToApplyPage() {
                                                         onClick={() => startEdit(website)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
                                                 )}
 
@@ -406,7 +406,7 @@ export default function WebsitesToApplyPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </div>
                                         </td>

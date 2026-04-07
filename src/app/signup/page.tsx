@@ -99,7 +99,7 @@ export default function SignupPage() {
 
             if (!sessionResponse.ok) {
                 const payload = await sessionResponse.json().catch(() => null);
-                setError(payload?.error ?? 'Could not persist session on server.');
+                setError(payload?.error ?? 'Nao foi possivel salvar a sessao no servidor.');
                 setLoading(false);
                 return;
             }

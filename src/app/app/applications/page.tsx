@@ -67,7 +67,7 @@ function toFormValues(application: Application): ApplicationFormValues {
     };
 }
 
-function sortApplications(data: Application[]) {
+function sortCandidaturas(data: Application[]) {
     return [...data].sort((a, b) => {
         if (a.applied_date === b.applied_date) {
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -78,7 +78,7 @@ function sortApplications(data: Application[]) {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 function toSafeExternalUrl(value: string | null) {
@@ -157,15 +157,15 @@ function getUniqueRecentValues(values: Array<string | null | undefined>, limit =
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
 }
 
-export default function ApplicationsPage() {
+export default function CandidaturasPage() {
     const [formValues, setFormValues] = useState<ApplicationFormValues>(getInitialFormState);
-    const [applications, setApplications] = useState<Application[]>([]);
+    const [applications, setCandidaturas] = useState<Application[]>([]);
     const [loadingList, setLoadingList] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [savingRowId, setSavingRowId] = useState<string | null>(null);
@@ -173,7 +173,7 @@ export default function ApplicationsPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingValues, setEditingValues] = useState<ApplicationFormValues>(getInitialFormState);
     const [companyFilter, setCompanyFilter] = useState('');
-    const [applicationsPage, setApplicationsPage] = useState(1);
+    const [applicationsPage, setCandidaturasPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const appliedDateInputRef = useRef<HTMLInputElement | null>(null);
@@ -186,13 +186,13 @@ export default function ApplicationsPage() {
         input?.showPicker?.();
     }
 
-    async function loadApplications() {
+    async function loadCandidaturas() {
         setLoadingList(true);
         setError(null);
 
         try {
             const data = await parseResponse<Application[]>(await fetch('/api/applications'));
-            setApplications(sortApplications(data));
+            setCandidaturas(sortCandidaturas(data));
         } catch (loadError) {
             setError(getErrorMessage(loadError));
         } finally {
@@ -201,11 +201,11 @@ export default function ApplicationsPage() {
     }
 
     useEffect(() => {
-        void loadApplications();
+        void loadCandidaturas();
     }, []);
 
     useEffect(() => {
-        setApplicationsPage(1);
+        setCandidaturasPage(1);
     }, [companyFilter, applications.length]);
 
     async function handleCreateApplication(event: FormEvent<HTMLFormElement>) {
@@ -223,9 +223,9 @@ export default function ApplicationsPage() {
                 })
             );
 
-            setApplications(current => sortApplications([created, ...current]));
+            setCandidaturas(current => sortCandidaturas([created, ...current]));
             setFormValues(getInitialFormState());
-            setSuccessMessage('Application added.');
+            setSuccessMessage('Candidatura adicionada.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -250,10 +250,10 @@ export default function ApplicationsPage() {
                 })
             );
 
-            setApplications(current =>
+            setCandidaturas(current =>
                 current.map(item => (item.id === applicationId ? updated : item))
             );
-            setSuccessMessage('Application updated.');
+            setSuccessMessage('Candidatura atualizada.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -266,12 +266,12 @@ export default function ApplicationsPage() {
         setEditingValues(toFormValues(application));
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(applicationId: string) {
+    async function saveEditar(applicationId: string) {
         setSavingRowId(applicationId);
         setError(null);
         setSuccessMessage(null);
@@ -285,13 +285,13 @@ export default function ApplicationsPage() {
                 })
             );
 
-            setApplications(current =>
-                sortApplications(
+            setCandidaturas(current =>
+                sortCandidaturas(
                     current.map(item => (item.id === applicationId ? updated : item))
                 )
             );
-            cancelEdit();
-            setSuccessMessage('Application updated.');
+            cancelEditar();
+            setSuccessMessage('Candidatura atualizada.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -300,7 +300,7 @@ export default function ApplicationsPage() {
     }
 
     async function handleDeleteApplication(applicationId: string) {
-        const confirmed = window.confirm('Delete this application?');
+        const confirmed = window.confirm('Excluir esta candidatura?');
         if (!confirmed) return;
 
         setDeletingRowId(applicationId);
@@ -314,14 +314,14 @@ export default function ApplicationsPage() {
 
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
-            setApplications(current => current.filter(item => item.id !== applicationId));
+            setCandidaturas(current => current.filter(item => item.id !== applicationId));
             if (editingId === applicationId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('Application removed.');
+            setSuccessMessage('Candidatura removida.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -329,7 +329,7 @@ export default function ApplicationsPage() {
         }
     }
 
-    const filteredApplications = useMemo(() => {
+    const filteredCandidaturas = useMemo(() => {
         const normalizedFilter = companyFilter.trim().toLowerCase();
         if (!normalizedFilter) return applications;
 
@@ -340,38 +340,38 @@ export default function ApplicationsPage() {
         );
     }, [applications, companyFilter]);
 
-    const totalApplicationsPages = useMemo(() => {
-        return Math.max(1, Math.ceil(filteredApplications.length / APPLICATIONS_PER_PAGE));
-    }, [filteredApplications.length]);
+    const totalCandidaturasPages = useMemo(() => {
+        return Math.max(1, Math.ceil(filteredCandidaturas.length / APPLICATIONS_PER_PAGE));
+    }, [filteredCandidaturas.length]);
 
     const applicationsPaginationItems = useMemo(
-        () => getPaginationItems(applicationsPage, totalApplicationsPages),
-        [applicationsPage, totalApplicationsPages]
+        () => getPaginationItems(applicationsPage, totalCandidaturasPages),
+        [applicationsPage, totalCandidaturasPages]
     );
 
     useEffect(() => {
-        if (applicationsPage > totalApplicationsPages) {
-            setApplicationsPage(totalApplicationsPages);
+        if (applicationsPage > totalCandidaturasPages) {
+            setCandidaturasPage(totalCandidaturasPages);
         }
-    }, [applicationsPage, totalApplicationsPages]);
+    }, [applicationsPage, totalCandidaturasPages]);
 
-    const paginatedApplications = useMemo(() => {
-        const safePage = Math.min(applicationsPage, totalApplicationsPages);
+    const paginatedCandidaturas = useMemo(() => {
+        const safePage = Math.min(applicationsPage, totalCandidaturasPages);
         const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
-        return filteredApplications.slice(startIndex, startIndex + APPLICATIONS_PER_PAGE);
-    }, [applicationsPage, filteredApplications, totalApplicationsPages]);
+        return filteredCandidaturas.slice(startIndex, startIndex + APPLICATIONS_PER_PAGE);
+    }, [applicationsPage, filteredCandidaturas, totalCandidaturasPages]);
 
     const applicationsPageSummary = useMemo(() => {
-        if (filteredApplications.length === 0) {
-            return 'Showing 0 of 0';
+        if (filteredCandidaturas.length === 0) {
+            return 'Exibindo 0 de 0';
         }
 
-        const safePage = Math.min(applicationsPage, totalApplicationsPages);
+        const safePage = Math.min(applicationsPage, totalCandidaturasPages);
         const startIndex = (safePage - 1) * APPLICATIONS_PER_PAGE;
         const from = startIndex + 1;
-        const to = Math.min(startIndex + APPLICATIONS_PER_PAGE, filteredApplications.length);
-        return `Showing ${from}-${to} of ${filteredApplications.length}`;
-    }, [applicationsPage, filteredApplications.length, totalApplicationsPages]);
+        const to = Math.min(startIndex + APPLICATIONS_PER_PAGE, filteredCandidaturas.length);
+        return `Exibindo ${from}-${to} de ${filteredCandidaturas.length}`;
+    }, [applicationsPage, filteredCandidaturas.length, totalCandidaturasPages]);
 
     const locationHistory = useMemo(
         () => getUniqueRecentValues(applications.map(application => application.location)),
@@ -386,18 +386,18 @@ export default function ApplicationsPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Applications</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Candidaturas</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Add new applications and update pipeline status in place.
+                    Adicione novas candidaturas e atualize o status do pipeline no mesmo lugar.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">New Application</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Nova candidatura</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreateApplication}>
                     <div>
                         <label className="label" htmlFor="applied_date">
-                            Applied Date *
+                            Data da candidatura *
                         </label>
                         <input
                             id="applied_date"
@@ -419,14 +419,14 @@ export default function ApplicationsPage() {
 
                     <div>
                         <label className="label" htmlFor="company">
-                            Company *
+                            Empresa *
                         </label>
                         <input
                             id="company"
                             type="text"
                             required
                             className="input"
-                            placeholder="Company name"
+                            placeholder="Nome da empresa"
                             value={formValues.company}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -439,14 +439,14 @@ export default function ApplicationsPage() {
 
                     <div>
                         <label className="label" htmlFor="role_title">
-                            Role Title *
+                            Cargo *
                         </label>
                         <input
                             id="role_title"
                             type="text"
                             required
                             className="input"
-                            placeholder="Frontend Engineer"
+                            placeholder="Engenheiro(a) Frontend"
                             value={formValues.role_title}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -459,7 +459,7 @@ export default function ApplicationsPage() {
 
                     <div>
                         <label className="label" htmlFor="work_mode">
-                            Work Mode
+                            Modalidade
                         </label>
                         <select
                             id="work_mode"
@@ -482,7 +482,7 @@ export default function ApplicationsPage() {
 
                     <div>
                         <label className="label" htmlFor="location">
-                            Location
+                            Localizacao
                         </label>
                         <input
                             id="location"
@@ -502,7 +502,7 @@ export default function ApplicationsPage() {
 
                     <div>
                         <label className="label" htmlFor="job_url">
-                            Job URL
+                            URL da vaga
                         </label>
                         <input
                             id="job_url"
@@ -544,7 +544,7 @@ export default function ApplicationsPage() {
 
                     <div>
                         <label className="label" htmlFor="category">
-                            Category
+                            Categoria
                         </label>
                         <select
                             id="category"
@@ -567,13 +567,13 @@ export default function ApplicationsPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="recruiter_contact_notes">
-                            Recruiter Contact Notes
+                            Observacoes do recrutador
                         </label>
                         <input
                             id="recruiter_contact_notes"
                             type="text"
                             className="input"
-                            placeholder="Optional notes"
+                            placeholder="Observacoes opcionais"
                             value={formValues.recruiter_contact_notes}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -586,14 +586,14 @@ export default function ApplicationsPage() {
 
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="notes">
-                            Notes
+                            Observacoes
                         </label>
                         <input
                             id="notes"
                             type="text"
                             className="input"
                             list="applications-notes-history"
-                            placeholder="Optional notes"
+                            placeholder="Observacoes opcionais"
                             value={formValues.notes}
                             onChange={event =>
                                 setFormValues(current => ({
@@ -619,7 +619,7 @@ export default function ApplicationsPage() {
                     <div className="md:col-span-2 xl:col-span-4">
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Add Application'}
+                            {submitting ? 'Salvando...' : 'Adicionar candidatura'}
                         </button>
                     </div>
                 </form>
@@ -640,19 +640,19 @@ export default function ApplicationsPage() {
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Applications List</h3>
-                        <p className="text-sm text-slate-300">Filter by company or role.</p>
+                        <h3 className="text-base font-semibold text-slate-100 md:text-lg">Lista de candidaturas</h3>
+                        <p className="text-sm text-slate-300">Filtre por empresa ou cargo.</p>
                     </div>
 
                     <div className="w-full max-w-sm">
                         <label htmlFor="applications-company-filter" className="label">
-                            Search company or role
+                            Buscar empresa ou cargo
                         </label>
                         <input
                             id="applications-company-filter"
                             type="text"
                             className="input"
-                            placeholder="Search company or role..."
+                            placeholder="Buscar empresa ou cargo..."
                             value={companyFilter}
                             onChange={event => setCompanyFilter(event.target.value)}
                         />
@@ -663,17 +663,17 @@ export default function ApplicationsPage() {
                     <table>
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Company</th>
-                            <th>Role</th>
-                            <th>Work Mode</th>
-                            <th>Location</th>
-                            <th>Job URL</th>
+                            <th>Data</th>
+                            <th>Empresa</th>
+                            <th>Cargo</th>
+                            <th>Modalidade</th>
+                            <th>Localizacao</th>
+                            <th>URL da vaga</th>
                             <th>Status</th>
-                            <th>Category</th>
-                            <th className="min-w-[280px]">Recruiter Notes</th>
-                            <th className="min-w-[340px]">Notes</th>
-                            <th>Actions</th>
+                            <th>Categoria</th>
+                            <th className="min-w-[280px]">Observacoes do recrutador</th>
+                            <th className="min-w-[340px]">Observacoes</th>
+                            <th>Acoes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -681,24 +681,24 @@ export default function ApplicationsPage() {
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading applications...
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Carregando candidaturas...
                                     </span>
                                 </td>
                             </tr>
                         ) : applications.length === 0 ? (
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
-                                    No applications yet.
+                                    Nenhuma candidatura ainda.
                                 </td>
                             </tr>
-                        ) : filteredApplications.length === 0 ? (
+                        ) : filteredCandidaturas.length === 0 ? (
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
-                                    No applications found for this filter.
+                                    Nenhuma candidatura encontrada para este filtro.
                                 </td>
                             </tr>
                         ) : (
-                            paginatedApplications.map(application => {
+                            paginatedCandidaturas.map(application => {
                                 const rowBusy =
                                     savingRowId === application.id || deletingRowId === application.id;
                                 const isEditing = editingId === application.id;
@@ -825,7 +825,7 @@ export default function ApplicationsPage() {
                                                             rel="noopener noreferrer"
                                                             className="text-cyan-300 hover:underline"
                                                         >
-                                                            Open
+                                                            Abrir
                                                         </a>
                                                     ) : (
                                                         '-'
@@ -954,23 +954,23 @@ export default function ApplicationsPage() {
                                                             type="button"
                                                             className="btn-primary"
                                                             disabled={rowBusy}
-                                                            onClick={() => saveEdit(application.id)}
+                                                            onClick={() => saveEditar(application.id)}
                                                         >
                                                             {savingRowId === application.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Save className="h-4 w-4" />
                                                             )}
-                                                            Save
+                                                            Salvar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className="btn-secondary"
                                                             disabled={rowBusy}
-                                                            onClick={cancelEdit}
+                                                            onClick={cancelEditar}
                                                         >
                                                             <X className="h-4 w-4" />
-                                                            Cancel
+                                                            Cancelar
                                                         </button>
                                                     </>
                                                 ) : (
@@ -981,7 +981,7 @@ export default function ApplicationsPage() {
                                                         onClick={() => startEdit(application)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
                                                 )}
                                                 <button
@@ -995,7 +995,7 @@ export default function ApplicationsPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </div>
                                         </td>
@@ -1011,17 +1011,17 @@ export default function ApplicationsPage() {
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <p className="text-xs text-slate-400">{applicationsPageSummary}</p>
 
-                        {filteredApplications.length > APPLICATIONS_PER_PAGE ? (
+                        {filteredCandidaturas.length > APPLICATIONS_PER_PAGE ? (
                             <div className="flex flex-wrap items-center gap-2">
                                 <button
                                     type="button"
                                     className="btn-secondary"
                                     disabled={applicationsPage <= 1}
                                     onClick={() =>
-                                        setApplicationsPage(current => Math.max(1, current - 1))
+                                        setCandidaturasPage(current => Math.max(1, current - 1))
                                     }
                                 >
-                                    Previous
+                                    Anterior
                                 </button>
 
                                 {applicationsPaginationItems.map((item, index) =>
@@ -1036,7 +1036,7 @@ export default function ApplicationsPage() {
                                         <button
                                             key={item}
                                             type="button"
-                                            onClick={() => setApplicationsPage(item)}
+                                            onClick={() => setCandidaturasPage(item)}
                                             className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors ${
                                                 applicationsPage === item
                                                     ? 'border-cyan-300/70 bg-cyan-400/20 text-cyan-100'
@@ -1051,14 +1051,14 @@ export default function ApplicationsPage() {
                                 <button
                                     type="button"
                                     className="btn-secondary"
-                                    disabled={applicationsPage >= totalApplicationsPages}
+                                    disabled={applicationsPage >= totalCandidaturasPages}
                                     onClick={() =>
-                                        setApplicationsPage(current =>
-                                            Math.min(totalApplicationsPages, current + 1)
+                                        setCandidaturasPage(current =>
+                                            Math.min(totalCandidaturasPages, current + 1)
                                         )
                                     }
                                 >
-                                    Next
+                                    Proximo
                                 </button>
                             </div>
                         ) : null}

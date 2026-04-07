@@ -21,7 +21,7 @@ function getInitialFormState(): LinkFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 function toSafeExternalUrl(value: string | null) {
@@ -45,13 +45,13 @@ function toHostnameLabel(url: string) {
         const parsed = new URL(url);
         return parsed.hostname.replace(/^www\./i, '');
     } catch {
-        return 'website';
+        return 'site';
     }
 }
 
 function toCardSummary(item: SavedLink) {
     const source = item.notes || item.description;
-    if (!source) return 'No notes yet.';
+    if (!source) return 'Nenhuma observacao ainda.';
     const normalized = source.replace(/\s+/g, ' ').trim();
     if (normalized.length <= 125) return normalized;
     return `${normalized.slice(0, 125)}...`;
@@ -60,7 +60,7 @@ function toCardSummary(item: SavedLink) {
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
@@ -79,9 +79,9 @@ export default function LinksPage() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const linkCountLabel = useMemo(() => {
-        if (links.length === 0) return 'No links saved yet.';
-        if (links.length === 1) return '1 link saved.';
-        return `${links.length} links saved.`;
+        if (links.length === 0) return 'Nenhum link salvo ainda.';
+        if (links.length === 1) return '1 link salvo.';
+        return `${links.length} links salvos.`;
     }, [links.length]);
 
     async function loadLinks() {
@@ -118,7 +118,7 @@ export default function LinksPage() {
 
             setLinks(current => [created, ...current]);
             setFormValues(getInitialFormState());
-            setSuccessMessage('Link saved.');
+            setSuccessMessage('Link salvo.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -135,12 +135,12 @@ export default function LinksPage() {
         });
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(linkId: string) {
+    async function saveEditar(linkId: string) {
         setSavingLinkId(linkId);
         setError(null);
         setSuccessMessage(null);
@@ -155,8 +155,8 @@ export default function LinksPage() {
             );
 
             setLinks(current => current.map(item => (item.id === linkId ? updated : item)));
-            cancelEdit();
-            setSuccessMessage('Link updated.');
+            cancelEditar();
+            setSuccessMessage('Link atualizado.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -165,7 +165,7 @@ export default function LinksPage() {
     }
 
     async function handleDelete(linkId: string) {
-        const confirmed = window.confirm('Delete this link?');
+        const confirmed = window.confirm('Excluir este link?');
         if (!confirmed) return;
 
         setDeletingLinkId(linkId);
@@ -176,14 +176,14 @@ export default function LinksPage() {
             const response = await fetch(`/api/links/${linkId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setLinks(current => current.filter(item => item.id !== linkId));
             if (editingId === linkId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('Link removed.');
+            setSuccessMessage('Link removido.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -196,16 +196,16 @@ export default function LinksPage() {
             <header>
                 <h2 className="text-2xl font-bold text-slate-100">Links</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Save useful links in one place, like a mini drive, with auto preview cards.
+                    Salve links uteis em um so lugar, como um mini drive, com cards de previa automatica.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Link</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar link</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" onSubmit={handleCreate}>
                     <div className="xl:col-span-2">
                         <label className="label" htmlFor="link-url">
-                            Link URL *
+                            URL do link *
                         </label>
                         <input
                             id="link-url"
@@ -222,13 +222,13 @@ export default function LinksPage() {
 
                     <div>
                         <label className="label" htmlFor="link-title">
-                            Custom Title
+                            Titulo personalizado
                         </label>
                         <input
                             id="link-title"
                             type="text"
                             className="input"
-                            placeholder="Optional"
+                            placeholder="Opcional"
                             value={formValues.title}
                             onChange={event =>
                                 setFormValues(current => ({ ...current, title: event.target.value }))
@@ -238,12 +238,12 @@ export default function LinksPage() {
 
                     <div className="md:col-span-2 xl:col-span-3">
                         <label className="label" htmlFor="link-notes">
-                            Notes
+                            Observacoes
                         </label>
                         <textarea
                             id="link-notes"
                             className="input min-h-[90px] resize-y"
-                            placeholder="Optional notes for this link..."
+                            placeholder="Observacoes opcionais para este link..."
                             value={formValues.notes}
                             onChange={event =>
                                 setFormValues(current => ({ ...current, notes: event.target.value }))
@@ -253,11 +253,11 @@ export default function LinksPage() {
 
                     <div className="md:col-span-2 xl:col-span-3 flex flex-wrap items-center justify-between gap-2">
                         <p className="text-xs text-slate-400">
-                            Preview image and metadata are fetched automatically when available.
+                            A imagem de previa e os metadados sao buscados automaticamente quando disponiveis.
                         </p>
                         <button className="btn-primary" type="submit" disabled={submitting}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Save Link'}
+                            {submitting ? 'Salvando...' : 'Salvar link'}
                         </button>
                     </div>
                 </form>
@@ -277,7 +277,7 @@ export default function LinksPage() {
 
             <div className="card p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Saved Links</h3>
+                    <h3 className="text-base font-semibold text-slate-100 md:text-lg">Links salvos</h3>
                     <p className="text-xs text-slate-400">{linkCountLabel}</p>
                 </div>
 
@@ -285,12 +285,12 @@ export default function LinksPage() {
                     <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
                         <span className="inline-flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading links...
+                            Carregando links...
                         </span>
                     </div>
                 ) : links.length === 0 ? (
                     <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-8 text-center text-slate-400">
-                        No links added yet.
+                        Nenhum link adicionado.
                     </div>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -312,7 +312,7 @@ export default function LinksPage() {
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
                                                     src={safePreviewImage}
-                                                    alt={`${item.title} preview`}
+                                                    alt={`Previa de ${item.title}`}
                                                     className="h-full w-full object-cover"
                                                     loading="lazy"
                                                     referrerPolicy="no-referrer"
@@ -335,7 +335,7 @@ export default function LinksPage() {
                                             <div className="space-y-3">
                                                 <div>
                                                     <label className="label" htmlFor={`edit-url-${item.id}`}>
-                                                        Link URL *
+                                                        URL do link *
                                                     </label>
                                                     <input
                                                         id={`edit-url-${item.id}`}
@@ -352,7 +352,7 @@ export default function LinksPage() {
 
                                                 <div>
                                                     <label className="label" htmlFor={`edit-title-${item.id}`}>
-                                                        Title *
+                                                        Titulo *
                                                     </label>
                                                     <input
                                                         id={`edit-title-${item.id}`}
@@ -369,7 +369,7 @@ export default function LinksPage() {
 
                                                 <div>
                                                     <label className="label" htmlFor={`edit-notes-${item.id}`}>
-                                                        Notes
+                                                        Observacoes
                                                     </label>
                                                     <textarea
                                                         id={`edit-notes-${item.id}`}
@@ -389,24 +389,24 @@ export default function LinksPage() {
                                                         type="button"
                                                         className="btn-primary"
                                                         disabled={rowBusy}
-                                                        onClick={() => saveEdit(item.id)}
+                                                        onClick={() => saveEditar(item.id)}
                                                     >
                                                         {savingLinkId === item.id ? (
                                                             <Loader2 className="h-4 w-4 animate-spin" />
                                                         ) : (
                                                             <Save className="h-4 w-4" />
                                                         )}
-                                                        Save
+                                                        Salvar
                                                     </button>
 
                                                     <button
                                                         type="button"
                                                         className="btn-secondary"
                                                         disabled={rowBusy}
-                                                        onClick={cancelEdit}
+                                                        onClick={cancelEditar}
                                                     >
                                                         <X className="h-4 w-4" />
-                                                        Cancel
+                                                        Cancelar
                                                     </button>
                                                 </div>
                                             </div>
@@ -426,7 +426,7 @@ export default function LinksPage() {
                                                 </p>
 
                                                 <p className="text-xs text-slate-400">
-                                                    Saved on {new Date(item.created_at).toLocaleDateString()}
+                                                    Salvo em {new Date(item.created_at).toLocaleDateString()}
                                                 </p>
 
                                                 <div className="flex flex-wrap items-center gap-2">
@@ -438,11 +438,11 @@ export default function LinksPage() {
                                                             className="btn-primary"
                                                         >
                                                             <ExternalLink className="h-4 w-4" />
-                                                            Open
+                                                            Abrir
                                                         </Link>
                                                     ) : (
                                                         <span className="btn-secondary cursor-not-allowed opacity-60">
-                                                            Invalid URL
+                                                            URL invalida
                                                         </span>
                                                     )}
 
@@ -453,7 +453,7 @@ export default function LinksPage() {
                                                         onClick={() => startEdit(item)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
 
                                                     <button
@@ -467,7 +467,7 @@ export default function LinksPage() {
                                                         ) : (
                                                             <Trash2 className="h-4 w-4" />
                                                         )}
-                                                        Delete
+                                                        Excluir
                                                     </button>
                                                 </div>
                                             </>

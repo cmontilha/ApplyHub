@@ -17,7 +17,7 @@ type NetworkingFormValues = {
     notes: string;
 };
 
-function getTodayLocalDate() {
+function getHojeLocalDate() {
     const now = new Date();
     const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     return localDate.toISOString().slice(0, 10);
@@ -31,7 +31,7 @@ function getInitialFormState(): NetworkingFormValues {
         email: '',
         phone: '',
         linkedin_url: '',
-        last_contact_at: getTodayLocalDate(),
+        last_contact_at: getHojeLocalDate(),
         birthday_date: '',
         notes: '',
     };
@@ -39,13 +39,13 @@ function getInitialFormState(): NetworkingFormValues {
 
 function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
-    return 'Something went wrong';
+    return 'Algo deu errado';
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? 'Request failed');
+        throw new Error(payload?.error ?? 'Falha na requisicao');
     }
 
     return response.json() as Promise<T>;
@@ -126,7 +126,7 @@ export default function NetworkingPage() {
 
             setContacts(current => [created, ...current]);
             setFormValues(getInitialFormState());
-            setSuccessMessage('Contact added.');
+            setSuccessMessage('Contato adicionado.');
         } catch (createError) {
             setError(getErrorMessage(createError));
         } finally {
@@ -149,12 +149,12 @@ export default function NetworkingPage() {
         });
     }
 
-    function cancelEdit() {
+    function cancelEditar() {
         setEditingId(null);
         setEditingValues(getInitialFormState());
     }
 
-    async function saveEdit(contactId: string) {
+    async function saveEditar(contactId: string) {
         setSavingRowId(contactId);
         setError(null);
         setSuccessMessage(null);
@@ -169,8 +169,8 @@ export default function NetworkingPage() {
             );
 
             setContacts(current => current.map(item => (item.id === contactId ? updated : item)));
-            cancelEdit();
-            setSuccessMessage('Contact updated.');
+            cancelEditar();
+            setSuccessMessage('Contato atualizado.');
         } catch (updateError) {
             setError(getErrorMessage(updateError));
         } finally {
@@ -179,7 +179,7 @@ export default function NetworkingPage() {
     }
 
     async function handleDelete(contactId: string) {
-        const confirmed = window.confirm('Delete this contact?');
+        const confirmed = window.confirm('Excluir este contato?');
         if (!confirmed) return;
 
         setDeletingRowId(contactId);
@@ -190,14 +190,14 @@ export default function NetworkingPage() {
             const response = await fetch(`/api/networking/${contactId}`, { method: 'DELETE' });
             if (!response.ok) {
                 const payload = await response.json().catch(() => null);
-                throw new Error(payload?.error ?? 'Request failed');
+                throw new Error(payload?.error ?? 'Falha na requisicao');
             }
 
             setContacts(current => current.filter(item => item.id !== contactId));
             if (editingId === contactId) {
-                cancelEdit();
+                cancelEditar();
             }
-            setSuccessMessage('Contact removed.');
+            setSuccessMessage('Contato removido.');
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -218,7 +218,7 @@ export default function NetworkingPage() {
             );
 
             setContacts(current => current.map(item => (item.id === contactId ? updated : item)));
-            setSuccessMessage('Follow-up updated. Next check scheduled in 5 months.');
+            setSuccessMessage('Follow-up atualizado. Proxima revisao agendada para 5 meses.');
         } catch (followUpError) {
             setError(getErrorMessage(followUpError));
         } finally {
@@ -229,18 +229,18 @@ export default function NetworkingPage() {
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Networking</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Rede de contatos</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Manage people, contacts, and your 5-month follow-up cycle.
+                    Gerencie pessoas, contatos e seu ciclo de follow-up de 5 meses.
                 </p>
             </header>
 
             <div className="card p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-100">Add Contact</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-100">Adicionar contato</h3>
                 <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreate}>
                     <div>
                         <label className="label" htmlFor="name">
-                            Name *
+                            Nome *
                         </label>
                         <input
                             id="name"
@@ -256,7 +256,7 @@ export default function NetworkingPage() {
 
                     <div>
                         <label className="label" htmlFor="company">
-                            Company
+                            Empresa
                         </label>
                         <input
                             id="company"
@@ -271,7 +271,7 @@ export default function NetworkingPage() {
 
                     <div>
                         <label className="label" htmlFor="role_title">
-                            Role
+                            Cargo
                         </label>
                         <input
                             id="role_title"
@@ -286,7 +286,7 @@ export default function NetworkingPage() {
 
                     <div>
                         <label className="label" htmlFor="last_contact_at">
-                            Last Contact *
+                            Ultimo contato *
                         </label>
                         <input
                             id="last_contact_at"
@@ -320,7 +320,7 @@ export default function NetworkingPage() {
 
                     <div>
                         <label className="label" htmlFor="birthday_date">
-                            Birthday
+                            Aniversario
                         </label>
                         <input
                             id="birthday_date"
@@ -338,7 +338,7 @@ export default function NetworkingPage() {
 
                     <div>
                         <label className="label" htmlFor="phone">
-                            Phone
+                            Telefone
                         </label>
                         <input
                             id="phone"
@@ -372,7 +372,7 @@ export default function NetworkingPage() {
 
                     <div>
                         <label className="label" htmlFor="notes">
-                            Notes
+                            Observacoes
                         </label>
                         <input
                             id="notes"
@@ -387,7 +387,7 @@ export default function NetworkingPage() {
 
                     <div className="md:col-span-2 xl:col-span-4">
                         <p className="mb-2 text-xs text-slate-400">
-                            Add at least one contact method (email, phone, or LinkedIn).
+                            Adicione pelo menos um meio de contato (email, telefone ou LinkedIn).
                         </p>
                         <button
                             className="btn-primary"
@@ -395,7 +395,7 @@ export default function NetworkingPage() {
                             disabled={submitting || !hasContactMethod}
                         >
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                            {submitting ? 'Saving...' : 'Add Contact'}
+                            {submitting ? 'Salvando...' : 'Adicionar contato'}
                         </button>
                     </div>
                 </form>
@@ -417,17 +417,17 @@ export default function NetworkingPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Company</th>
-                            <th>Role</th>
+                            <th>Nome</th>
+                            <th>Empresa</th>
+                            <th>Cargo</th>
                             <th>Email</th>
-                            <th>Phone</th>
+                            <th>Telefone</th>
                             <th>LinkedIn</th>
-                            <th>Birthday</th>
-                            <th>Last Contact</th>
-                            <th>Next Follow-up</th>
-                            <th>Notes</th>
-                            <th>Actions</th>
+                            <th>Aniversario</th>
+                            <th>Ultimo contato</th>
+                            <th>Proximo follow-up</th>
+                            <th>Observacoes</th>
+                            <th>Acoes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -435,14 +435,14 @@ export default function NetworkingPage() {
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
                                     <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Loading contacts...
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Carregando contatos...
                                     </span>
                                 </td>
                             </tr>
                         ) : contacts.length === 0 ? (
                             <tr>
                                 <td colSpan={11} className="py-12 text-center text-slate-400">
-                                    No contacts added.
+                                    Nenhum contato adicionado.
                                 </td>
                             </tr>
                         ) : (
@@ -554,7 +554,7 @@ export default function NetworkingPage() {
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1 text-cyan-300 hover:underline"
                                                 >
-                                                    Profile <ExternalLink className="h-3 w-3" />
+                                                    Perfil <ExternalLink className="h-3 w-3" />
                                                 </Link>
                                             ) : (
                                                 '-'
@@ -619,23 +619,23 @@ export default function NetworkingPage() {
                                                             type="button"
                                                             className="btn-primary"
                                                             disabled={rowBusy}
-                                                            onClick={() => saveEdit(contact.id)}
+                                                            onClick={() => saveEditar(contact.id)}
                                                         >
                                                             {savingRowId === contact.id ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
                                                                 <Save className="h-4 w-4" />
                                                             )}
-                                                            Save
+                                                            Salvar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className="btn-secondary"
                                                             disabled={rowBusy}
-                                                            onClick={cancelEdit}
+                                                            onClick={cancelEditar}
                                                         >
                                                             <X className="h-4 w-4" />
-                                                            Cancel
+                                                            Cancelar
                                                         </button>
                                                     </>
                                                 ) : (
@@ -646,7 +646,7 @@ export default function NetworkingPage() {
                                                         onClick={() => startEdit(contact)}
                                                     >
                                                         <Edit3 className="h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </button>
                                                 )}
                                                 <button
@@ -660,7 +660,7 @@ export default function NetworkingPage() {
                                                     ) : (
                                                         <CheckCircle2 className="h-4 w-4" />
                                                     )}
-                                                    Follow-up done
+                                                    Follow-up concluido
                                                 </button>
                                                 <button
                                                     type="button"
@@ -673,7 +673,7 @@ export default function NetworkingPage() {
                                                     ) : (
                                                         <Trash2 className="h-4 w-4" />
                                                     )}
-                                                    Delete
+                                                    Excluir
                                                 </button>
                                             </div>
                                         </td>

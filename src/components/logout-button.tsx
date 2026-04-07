@@ -29,12 +29,12 @@ export function LogoutButton({ className = '', compact = false }: LogoutButtonPr
         <button
             type="button"
             onClick={handleLogout}
-            title="Logout"
+            title="Sair"
             className={`btn-secondary w-full justify-center ${className}`}
             disabled={loading}
         >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-            {!compact ? (loading ? 'Signing out...' : 'Logout') : null}
+            {!compact ? (loading ? 'Saindo...' : 'Sair') : null}
         </button>
     );
 }

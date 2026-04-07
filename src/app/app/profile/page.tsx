@@ -37,14 +37,14 @@ export default async function ProfilePage() {
         typeof user.user_metadata?.full_name === 'string'
             ? user.user_metadata.full_name.trim()
             : '';
-    const displayName = metadataName || formatName(user.email ?? 'ApplyHub User');
+    const displayName = metadataName || formatName(user.email ?? 'Usuario ApplyHub');
 
     return (
         <section className="space-y-6">
             <header>
-                <h2 className="text-2xl font-bold text-slate-100">Profile</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Perfil</h2>
                 <p className="mt-1 text-sm text-slate-300">
-                    Account and activity overview inside ApplyHub.
+                    Visao geral da conta e da atividade no ApplyHub.
                 </p>
             </header>
 
@@ -61,7 +61,7 @@ export default async function ProfilePage() {
                         </p>
                         <p className="mt-2 inline-flex items-center gap-2 text-xs text-emerald-200">
                             <ShieldCheck className="h-4 w-4" />
-                            Authenticated via Supabase Auth
+                            Autenticado via Supabase Auth
                         </p>
                     </div>
                 </div>
@@ -71,7 +71,7 @@ export default async function ProfilePage() {
 
             <div className="grid gap-4 md:grid-cols-3">
                 <article className="card p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Applications</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Candidaturas</p>
                     <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-100">
                         <Briefcase className="h-5 w-5 text-blue-600" />
                         {applicationsCount}
@@ -79,7 +79,7 @@ export default async function ProfilePage() {
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Companies</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Empresas</p>
                     <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-100">
                         <Building2 className="h-5 w-5 text-blue-600" />
                         {companiesCount}
@@ -87,7 +87,7 @@ export default async function ProfilePage() {
                 </article>
 
                 <article className="card p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Certifications</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Certificacoes</p>
                     <p className="mt-3 inline-flex items-center gap-2 text-3xl font-bold text-slate-100">
                         <GraduationCap className="h-5 w-5 text-blue-600" />
                         {certificationsCount}
@@ -96,8 +96,8 @@ export default async function ProfilePage() {
             </div>
 
             <article className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-100">Session</h3>
-                <p className="mt-1 text-sm text-slate-300">End your session securely from your profile.</p>
+                <h3 className="text-sm font-semibold text-slate-100">Sessao</h3>
+                <p className="mt-1 text-sm text-slate-300">Encerre sua sessao com seguranca pelo perfil.</p>
                 <div className="mt-4 max-w-xs">
                     <LogoutButton />
                 </div>
